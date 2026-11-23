@@ -1,1 +1,2776 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDV Quiosque | TECH PEREIRA BH</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        slate: {
+                            850: '#151e2e',
+                            900: '#0f172a',
+                            950: '#090d16',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+
+        /* Hide Number Input Spinners (Arrows) */
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+            appearance: textfield;
+        }
+
+        /* SweetAlert2 Dark Theme Overrides */
+        .swal2-popup {
+            background: #1e293b !important;
+            color: #f8fafc !important;
+            border: 1px solid #334155 !important;
+            border-radius: 1rem !important;
+        }
+        .swal2-title {
+            color: #f8fafc !important;
+        }
+        .swal2-html-container {
+            color: #cbd5e1 !important;
+        }
+        .swal2-input, .swal2-select {
+            background: #0f172a !important;
+            color: #f8fafc !important;
+            border: 1px solid #475569 !important;
+            border-radius: 0.5rem !important;
+        }
+
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); opacity: 0.8; }
+            100% { transform: scale(2.2); opacity: 0; }
+        }
+        .pulse-dot::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 9999px;
+            background-color: inherit;
+            animation: pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+
+        @keyframes critical-glow {
+            0%, 100% {
+                border-color: rgba(245, 158, 11, 0.85);
+                box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.35), inset 0 0 18px rgba(245, 158, 11, 0.08);
+            }
+            50% {
+                border-color: rgba(239, 68, 68, 0.95);
+                box-shadow: 0 0 16px 2px rgba(239, 68, 68, 0.35), inset 0 0 24px rgba(239, 68, 68, 0.14);
+            }
+        }
+        .critical-stock-card {
+            animation: critical-glow 1.8s ease-in-out infinite;
+        }
+
+        /* Print Media Styles for Clean PDF / Thermal Receipt Output */
+        @media print {
+            body {
+                background: #ffffff !important;
+                color: #0f172a !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            body > *:not(#print-report-modal) {
+                display: none !important;
+            }
+            #print-report-modal {
+                position: static !important;
+                inset: auto !important;
+                background: #ffffff !important;
+                padding: 0 !important;
+                display: block !important;
+                overflow: visible !important;
+            }
+            #print-modal-wrapper {
+                max-width: 100% !important;
+                width: 100% !important;
+                max-height: none !important;
+                border: none !important;
+                box-shadow: none !important;
+                background: #ffffff !important;
+                border-radius: 0 !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            #print-preview-scroll {
+                padding: 0 !important;
+                overflow: visible !important;
+                background: #ffffff !important;
+            }
+            #printable-document {
+                box-shadow: none !important;
+                margin: 0 auto !important;
+                border: none !important;
+            }
+            #printable-document.format-a4 {
+                width: 100% !important;
+                max-width: 100% !important;
+                padding: 8mm !important;
+            }
+            #printable-document.format-80mm {
+                width: 78mm !important;
+                max-width: 78mm !important;
+                padding: 3mm !important;
+                font-size: 11px !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col selection:bg-amber-500 selection:text-slate-950">
+
+    <!-- Top Navigation Bar -->
+    <header class="bg-slate-900/95 backdrop-blur-md border-b border-slate-800 sticky top-0 z-40">
+        <div class="max-w-[1600px] mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
+            <!-- Brand -->
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-slate-950 font-extrabold text-xl shadow-lg shadow-amber-500/20">
+                    <i class="fa-solid fa-mug-hot"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="font-bold text-base sm:text-lg tracking-tight text-white">PDV QUIOSQUE</h1>
+                        <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30">Demo Web</span>
+                    </div>
+                    <p class="text-[11px] text-slate-400 font-medium">TECH PEREIRA BH • Gestão Inteligente</p>
+                </div>
+            </div>
+
+            <!-- Navigation Tabs -->
+            <nav class="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 order-3 lg:order-2 w-full lg:w-auto overflow-x-auto">
+                <button onclick="switchTab('pdv')" id="tab-pdv" class="nav-btn flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all bg-amber-500 text-slate-950 shadow-sm">
+                    <i class="fa-solid fa-cash-register"></i>
+                    <span>Frente de Caixa</span>
+                </button>
+                <button onclick="switchTab('produtos')" id="tab-produtos" class="nav-btn flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold text-slate-400 hover:text-white transition-all">
+                    <i class="fa-solid fa-boxes-stacked"></i>
+                    <span>Produtos & Estoque</span>
+                    <span id="badge-low-stock" class="hidden px-1.5 py-0.2 text-[10px] font-bold rounded-full bg-red-500 text-white">0</span>
+                </button>
+                <button onclick="switchTab('relatorios')" id="tab-relatorios" class="nav-btn flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold text-slate-400 hover:text-white transition-all">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>Caixa & Relatórios</span>
+                </button>
+                <button onclick="switchTab('usuarios')" id="tab-usuarios" class="nav-btn flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold text-slate-400 hover:text-white transition-all">
+                    <i class="fa-solid fa-users-gear"></i>
+                    <span>Equipe</span>
+                </button>
+            </nav>
+
+            <!-- Operator & Cash Shift Status -->
+            <div class="flex items-center gap-2 sm:gap-3 order-2 lg:order-3">
+                <!-- Shift Status Button -->
+                <button onclick="openShiftControlModal()" id="shift-status-btn" class="flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-semibold transition-all bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20">
+                    <span class="relative flex h-2.5 w-2.5">
+                        <span id="shift-dot" class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 pulse-dot"></span>
+                    </span>
+                    <span id="shift-status-text">Caixa Aberto</span>
+                </button>
+
+                <!-- Active User Switcher -->
+                <button onclick="openLoginModal()" class="flex items-center gap-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-1.5 rounded-xl transition-all text-left">
+                    <div class="w-7 h-7 rounded-lg bg-slate-700 flex items-center justify-center text-amber-400 text-xs font-bold" id="active-user-avatar">
+                        AD
+                    </div>
+                    <div class="hidden sm:block">
+                        <p class="text-xs font-bold text-white leading-tight" id="active-user-name">Admin (Gerente)</p>
+                        <p class="text-[10px] text-slate-400 leading-tight" id="active-user-role">Administrador • Trocar</p>
+                    </div>
+                    <i class="fa-solid fa-chevron-down text-[10px] text-slate-400"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-6 py-5">
+
+        <!-- ==================== TAB 1: FRENTE DE CAIXA (PDV) ==================== -->
+        <section id="view-pdv" class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+            
+            <!-- Left Column: Product Selection (7 cols on lg, 8 on xl) -->
+            <div class="lg:col-span-7 xl:col-span-8 flex flex-col gap-4">
+                
+                <!-- Closed Register Warning Banner -->
+                <div id="closed-register-banner" class="hidden bg-red-500/10 border border-red-500/40 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-red-500/20 text-red-400 flex items-center justify-center text-lg shrink-0">
+                            <i class="fa-solid fa-lock"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-sm text-red-300">Turno / Caixa Fechado</h3>
+                            <p class="text-xs text-red-200/80">Abra o caixa informando o fundo de troco inicial para registrar novas vendas.</p>
+                        </div>
+                    </div>
+                    <button onclick="openShiftControlModal()" class="w-full sm:w-auto px-4 py-2 rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold text-xs transition-all shrink-0">
+                        <i class="fa-solid fa-key mr-1"></i> Abrir Caixa Agora
+                    </button>
+                </div>
+
+                <!-- Search & Category Filter Bar -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col gap-3">
+                    <div class="relative">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                        <input type="text" id="pdv-search" oninput="renderPDVProducts()" placeholder="Buscar salgado, café, bebida ou código..." class="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none transition-all">
+                    </div>
+
+                    <!-- Category Pills -->
+                    <div class="flex items-center gap-2 overflow-x-auto pb-1" id="category-pills">
+                        <button onclick="setCategory('Todos')" class="cat-pill active px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-amber-500 text-slate-950 whitespace-nowrap transition-all">
+                            Todos
+                        </button>
+                        <button onclick="setCategory('Salgados')" class="cat-pill px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition-all">
+                            <i class="fa-solid fa-drumstick-bite mr-1"></i> Salgados
+                        </button>
+                        <button onclick="setCategory('Cafés')" class="cat-pill px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition-all">
+                            <i class="fa-solid fa-mug-hot mr-1"></i> Cafés
+                        </button>
+                        <button onclick="setCategory('Refrigerantes')" class="cat-pill px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition-all">
+                            <i class="fa-solid fa-bottle-droplet mr-1"></i> Refrigerantes
+                        </button>
+                        <button onclick="setCategory('Sucos & Água')" class="cat-pill px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition-all">
+                            <i class="fa-solid fa-glass-water mr-1"></i> Sucos & Água
+                        </button>
+                        <button onclick="setCategory('Lanches')" class="cat-pill px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition-all">
+                            <i class="fa-solid fa-burger mr-1"></i> Lanches
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Critical Stock Alert Banner in PDV -->
+                <div id="pdv-critical-banner" class="hidden bg-gradient-to-r from-amber-500/15 via-red-500/15 to-amber-500/15 border border-amber-500/40 rounded-2xl px-4 py-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
+                    <div class="flex items-center gap-2.5">
+                        <span class="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-sm shrink-0 animate-pulse">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                        </span>
+                        <div>
+                            <p id="pdv-critical-title" class="text-xs font-bold text-amber-300">Atenção: Itens com estoque crítico!</p>
+                            <p id="pdv-critical-subtitle" class="text-[11px] text-slate-300">Clique em "+ Repor" no card ou filtre abaixo para reabastecer.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                        <button onclick="toggleCriticalFilter()" id="btn-filter-critical" class="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-[11px] transition-all whitespace-nowrap">
+                            Ver Apenas Críticos
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Product Grid -->
+                <div id="pdv-product-grid" class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">
+                    <!-- Rendered via JS -->
+                </div>
+            </div>
+
+            <!-- Right Column: Current Order / Comanda (5 cols on lg, 4 on xl) -->
+            <div class="lg:col-span-5 xl:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col lg:sticky lg:top-20 max-h-[calc(100vh-6rem)]">
+                <!-- Cart Header -->
+                <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-receipt text-amber-400"></i>
+                        <h2 class="font-bold text-sm sm:text-base text-white">Pedido Atual</h2>
+                    </div>
+                    <button onclick="clearCart()" class="text-xs text-slate-400 hover:text-red-400 font-medium transition-colors">
+                        <i class="fa-solid fa-trash-can mr-1"></i> Limpar
+                    </button>
+                </div>
+
+                <!-- Cart Items List -->
+                <div id="cart-items-container" class="flex-1 overflow-y-auto p-4 space-y-2.5 min-h-[220px]">
+                    <!-- Rendered via JS -->
+                </div>
+
+                <!-- Cart Summary & Checkout Action -->
+                <div class="p-4 bg-slate-950/70 border-t border-slate-800 rounded-b-2xl space-y-3">
+                    <div class="flex items-center justify-between text-xs text-slate-400">
+                        <span>Itens no pedido:</span>
+                        <span id="cart-total-items" class="font-semibold text-slate-200">0 un.</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm font-semibold text-slate-300">Total a Pagar</span>
+                        <span id="cart-total-value" class="text-2xl font-extrabold text-emerald-400">R$ 0,00</span>
+                    </div>
+
+                    <button onclick="openCheckoutModal()" id="btn-checkout" disabled class="w-full py-3.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-800 disabled:text-slate-500 disabled:cursor-not-allowed text-slate-950 font-extrabold text-sm sm:text-base shadow-lg shadow-emerald-500/10 transition-all flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-check-circle"></i>
+                        <span>Finalizar Venda</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== TAB 2: PRODUTOS & ESTOQUE ==================== -->
+        <section id="view-produtos" class="hidden space-y-5">
+            <!-- Header & Actions -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-lg font-bold text-white">Catálogo de Produtos & Controle de Estoque</h2>
+                    <p class="text-xs text-slate-400">Gerencie preços, categorias, reposição de mercadorias e alertas de estoque mínimo.</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <button onclick="openProductModal()" class="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs sm:text-sm transition-all flex items-center gap-2">
+                        <i class="fa-solid fa-plus"></i> Novo Produto
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stock Stats -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-blue-500/15 text-blue-400 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-box-open"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium">Total de Produtos</p>
+                        <p id="stat-total-products" class="text-2xl font-extrabold text-white">0</p>
+                    </div>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium">Estoque Baixo</p>
+                        <p id="stat-low-stock" class="text-2xl font-extrabold text-amber-400">0</p>
+                    </div>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-red-500/15 text-red-400 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-ban"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium">Produtos Esgotados</p>
+                        <p id="stat-out-stock" class="text-2xl font-extrabold text-red-400">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Products Table -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+                <div class="p-4 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <h3 class="font-bold text-sm text-white">Lista de Itens Cadastrados</h3>
+                    <input type="text" id="stock-search" oninput="renderStockTable()" placeholder="Filtrar produto..." class="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3.5 py-2 text-xs text-white outline-none w-full sm:w-64">
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-950/60 text-slate-400 text-[11px] uppercase tracking-wider border-b border-slate-800">
+                                <th class="py-3 px-4">Produto</th>
+                                <th class="py-3 px-4">Categoria</th>
+                                <th class="py-3 px-4">Preço Venda</th>
+                                <th class="py-3 px-4">Estoque Atual</th>
+                                <th class="py-3 px-4">Status</th>
+                                <th class="py-3 px-4 text-right">Ações / Reposição</th>
+                            </tr>
+                        </thead>
+                        <tbody id="stock-table-body" class="divide-y divide-slate-800/70 text-sm">
+                            <!-- Rendered via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Recent Stock Movements -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+                <h3 class="font-bold text-sm text-white mb-3"><i class="fa-solid fa-clock-rotate-left text-amber-400 mr-2"></i>Histórico Recente de Movimentação de Estoque</h3>
+                <div id="stock-movements-list" class="space-y-2 max-h-60 overflow-y-auto text-xs">
+                    <!-- Rendered via JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== TAB 3: CAIXA & RELATÓRIOS ==================== -->
+        <section id="view-relatorios" class="hidden space-y-5">
+            
+            <!-- Filter & Daily Closing Header -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-lg font-bold text-white">Painel Administrativo & Fechamento de Caixa</h2>
+                    <p class="text-xs text-slate-400">Acompanhe o faturamento por operador, formas de pagamento e realize o fechamento do turno.</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2.5">
+                    <div class="flex items-center gap-2 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2">
+                        <i class="fa-regular fa-calendar text-slate-400 text-xs"></i>
+                        <input type="date" id="report-date-filter" onchange="renderReports()" class="bg-transparent text-xs text-white outline-none">
+                    </div>
+                    <select id="report-operator-filter" onchange="renderReports()" class="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white outline-none">
+                        <option value="Todos">Todos os Operadores</option>
+                    </select>
+                    <button onclick="openPrintReportModal()" class="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold text-xs transition-all flex items-center gap-2 shadow-lg shadow-emerald-500/15">
+                        <i class="fa-solid fa-file-pdf"></i> Gerar Relatório / Imprimir PDF
+                    </button>
+                    <button onclick="openShiftControlModal()" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs transition-all flex items-center gap-2">
+                        <i class="fa-solid fa-cash-register"></i> Conferência / Fechar Turno
+                    </button>
+                </div>
+            </div>
+
+            <!-- Financial KPIs -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs text-slate-400 font-medium">Faturamento Filtrado</span>
+                        <span class="w-8 h-8 rounded-lg bg-emerald-500/15 text-emerald-400 flex items-center justify-center text-sm"><i class="fa-solid fa-sack-dollar"></i></span>
+                    </div>
+                    <p id="kpi-revenue" class="text-2xl font-extrabold text-emerald-400">R$ 0,00</p>
+                    <p id="kpi-sales-count" class="text-[11px] text-slate-400 mt-1">0 vendas realizadas</p>
+                </div>
+
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs text-slate-400 font-medium">Saldo Esperado na Gaveta</span>
+                        <span class="w-8 h-8 rounded-lg bg-amber-500/15 text-amber-400 flex items-center justify-center text-sm"><i class="fa-solid fa-vault"></i></span>
+                    </div>
+                    <p id="kpi-drawer-cash" class="text-2xl font-extrabold text-amber-400">R$ 0,00</p>
+                    <p id="kpi-drawer-detail" class="text-[11px] text-slate-400 mt-1">Fundo inicial + Vendas Dinheiro</p>
+                </div>
+
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs text-slate-400 font-medium">Ticket Médio</span>
+                        <span class="w-8 h-8 rounded-lg bg-blue-500/15 text-blue-400 flex items-center justify-center text-sm"><i class="fa-solid fa-receipt"></i></span>
+                    </div>
+                    <p id="kpi-avg-ticket" class="text-2xl font-extrabold text-white">R$ 0,00</p>
+                    <p class="text-[11px] text-slate-400 mt-1">Média por atendimento</p>
+                </div>
+
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs text-slate-400 font-medium">Itens Comercializados</span>
+                        <span class="w-8 h-8 rounded-lg bg-purple-500/15 text-purple-400 flex items-center justify-center text-sm"><i class="fa-solid fa-burger"></i></span>
+                    </div>
+                    <p id="kpi-items-sold" class="text-2xl font-extrabold text-white">0</p>
+                    <p id="kpi-top-product" class="text-[11px] text-slate-400 mt-1 truncate">Mais vendido: -</p>
+                </div>
+            </div>
+
+            <!-- Charts & Breakdown Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                <!-- Payment Methods Breakdown -->
+                <div class="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between">
+                    <h3 class="font-bold text-sm text-white mb-4"><i class="fa-solid fa-wallet text-emerald-400 mr-2"></i>Faturamento por Forma de Pagamento</h3>
+                    <div class="h-48 flex items-center justify-center mb-4">
+                        <canvas id="paymentChart"></canvas>
+                    </div>
+                    <div id="payment-breakdown-list" class="space-y-2 text-xs border-t border-slate-800 pt-3">
+                        <!-- Rendered via JS -->
+                    </div>
+                </div>
+
+                <!-- Operator Performance & Active Shift Log -->
+                <div class="lg:col-span-7 bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between">
+                    <div>
+                        <h3 class="font-bold text-sm text-white mb-4"><i class="fa-solid fa-user-check text-amber-400 mr-2"></i>Desempenho por Funcionário / Operador</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="text-[11px] text-slate-400 uppercase border-b border-slate-800">
+                                        <th class="py-2.5 px-3">Funcionário</th>
+                                        <th class="py-2.5 px-3">Cargo</th>
+                                        <th class="py-2.5 px-3">Qtd. Vendas</th>
+                                        <th class="py-2.5 px-3 text-right">Total Vendido</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="operator-performance-body" class="divide-y divide-slate-800/70 text-xs">
+                                    <!-- Rendered via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Cash Register Shift History -->
+                    <div class="mt-5 pt-4 border-t border-slate-800">
+                        <h4 class="font-bold text-xs text-slate-300 uppercase tracking-wider mb-2">Movimentações de Caixa / Turnos</h4>
+                        <div id="shift-history-list" class="space-y-2 max-h-36 overflow-y-auto text-xs">
+                            <!-- Rendered via JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sales History Table -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+                <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+                    <h3 class="font-bold text-sm text-white"><i class="fa-solid fa-list-ul text-blue-400 mr-2"></i>Histórico Detalhado de Vendas</h3>
+                    <span id="sales-history-badge" class="text-xs text-slate-400">Mostrando vendas do período</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-950/60 text-slate-400 text-[11px] uppercase tracking-wider border-b border-slate-800">
+                                <th class="py-3 px-4">#ID / Hora</th>
+                                <th class="py-3 px-4">Operador</th>
+                                <th class="py-3 px-4">Itens</th>
+                                <th class="py-3 px-4">Pagamento</th>
+                                <th class="py-3 px-4">Recebido / Troco</th>
+                                <th class="py-3 px-4 text-right">Total</th>
+                                <th class="py-3 px-4 text-center">Comprovante</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sales-history-body" class="divide-y divide-slate-800/70 text-xs">
+                            <!-- Rendered via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== TAB 4: EQUIPE & USUÁRIOS ==================== -->
+        <section id="view-usuarios" class="hidden space-y-5">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-lg font-bold text-white">Gestão de Usuários & Permissões</h2>
+                    <p class="text-xs text-slate-400">Cadastre operadores de caixa e gerentes com acesso individualizado.</p>
+                </div>
+                <button onclick="openAddUserModal()" class="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs sm:text-sm transition-all flex items-center gap-2 self-start sm:self-auto">
+                    <i class="fa-solid fa-user-plus"></i> Cadastrar Funcionário
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="users-grid">
+                <!-- Rendered via JS -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 border-t border-slate-800 py-4 px-6 mt-auto">
+        <div class="max-w-[1600px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
+            <p>© 2026 <strong class="text-slate-200">TECH PEREIRA BH</strong> — Do computador lento ao sistema da sua empresa.</p>
+            <button onclick="resetDemoData()" class="text-slate-400 hover:text-amber-400 transition-colors flex items-center gap-1.5">
+                <i class="fa-solid fa-rotate-right"></i> Restaurar Dados Iniciais de Demonstração
+            </button>
+        </div>
+    </footer>
+
+    <!-- ==================== MODALS ==================== -->
+
+    <!-- Checkout Modal -->
+    <div id="checkout-modal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full overflow-hidden shadow-2xl animate-fade-in">
+            <div class="p-5 border-b border-slate-800 flex items-center justify-between">
+                <h3 class="font-bold text-base text-white flex items-center gap-2">
+                    <i class="fa-solid fa-credit-card text-emerald-400"></i> Finalizar Pagamento
+                </h3>
+                <button onclick="closeModal('checkout-modal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <div class="p-5 space-y-4">
+                <!-- Total Display -->
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 text-center">
+                    <span class="text-xs text-slate-400 uppercase tracking-wider">Valor Total da Venda</span>
+                    <p id="checkout-total-display" class="text-3xl font-extrabold text-emerald-400 mt-1">R$ 0,00</p>
+                </div>
+
+                <!-- Payment Method Grid -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-2">Selecione a Forma de Pagamento</label>
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <button type="button" onclick="selectPaymentMethod('Dinheiro')" class="pay-method-btn p-3 rounded-xl border border-emerald-500 bg-emerald-500/15 text-emerald-300 font-bold text-xs flex items-center justify-center gap-2 transition-all" data-method="Dinheiro">
+                            <i class="fa-solid fa-money-bill-wave text-base"></i> Dinheiro
+                        </button>
+                        <button type="button" onclick="selectPaymentMethod('Pix')" class="pay-method-btn p-3 rounded-xl border border-slate-700 bg-slate-800/60 text-slate-300 font-bold text-xs flex items-center justify-center gap-2 transition-all" data-method="Pix">
+                            <i class="fa-brands fa-pix text-base"></i> Pix
+                        </button>
+                        <button type="button" onclick="selectPaymentMethod('Cartão de Débito')" class="pay-method-btn p-3 rounded-xl border border-slate-700 bg-slate-800/60 text-slate-300 font-bold text-xs flex items-center justify-center gap-2 transition-all" data-method="Cartão de Débito">
+                            <i class="fa-solid fa-credit-card text-base"></i> Débito
+                        </button>
+                        <button type="button" onclick="selectPaymentMethod('Cartão de Crédito')" class="pay-method-btn p-3 rounded-xl border border-slate-700 bg-slate-800/60 text-slate-300 font-bold text-xs flex items-center justify-center gap-2 transition-all" data-method="Cartão de Crédito">
+                            <i class="fa-regular fa-credit-card text-base"></i> Crédito
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Cash Summary Preview inside Checkout Modal (when Dinheiro is configured) -->
+                <div id="cash-summary-preview" class="hidden bg-slate-950 border border-emerald-500/30 rounded-xl p-3.5 space-y-1.5 text-xs">
+                    <div class="flex items-center justify-between">
+                        <span class="text-slate-400">Valor Recebido em Espécie:</span>
+                        <strong id="preview-cash-received" class="text-white">R$ 0,00</strong>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-slate-400">Troco a Entregar ao Cliente:</span>
+                        <strong id="preview-cash-change" class="text-amber-400 text-sm">R$ 0,00</strong>
+                    </div>
+                    <button type="button" onclick="openCashPaymentModal()" class="w-full mt-1.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-400 font-semibold text-[11px] transition-colors">
+                        <i class="fa-solid fa-pen-to-square mr-1"></i> Alterar Valor Recebido
+                    </button>
+                </div>
+
+                <button onclick="confirmSale()" class="w-full py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold text-sm transition-all shadow-lg shadow-emerald-500/20">
+                    Confirmar e Registrar Venda
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dedicated Cash Payment & Change Pop-up Modal -->
+    <div id="cash-payment-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] hidden items-center justify-center p-4">
+        <div class="bg-slate-900 border border-amber-500/40 rounded-2xl max-w-sm w-full overflow-hidden shadow-2xl">
+            <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/60">
+                <h3 class="font-bold text-sm sm:text-base text-white flex items-center gap-2">
+                    <i class="fa-solid fa-money-bill-wave text-emerald-400"></i> Pagamento em Dinheiro
+                </h3>
+                <button type="button" onclick="closeModal('cash-payment-modal')" class="text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="p-5 space-y-4">
+                <!-- Order Total Reminder -->
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 flex items-center justify-between">
+                    <span class="text-xs font-semibold text-slate-400">Total da Venda:</span>
+                    <span id="cash-modal-total" class="text-lg font-extrabold text-emerald-400">R$ 0,00</span>
+                </div>
+
+                <!-- Cash Received Input -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1.5">Valor Recebido do Cliente (R$)</label>
+                    <input type="number" step="0.01" id="cash-received-input" oninput="calculateChange()" placeholder="0,00" class="w-full bg-slate-950 border-2 border-amber-500/70 focus:border-amber-400 rounded-xl px-4 py-3 text-2xl font-extrabold text-white outline-none text-right">
+                </div>
+
+                <!-- Quick Cash Buttons -->
+                <div class="grid grid-cols-5 gap-1.5">
+                    <button type="button" onclick="setQuickCash('exact')" class="py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-[11px] font-bold text-amber-400 border border-slate-700">Exato</button>
+                    <button type="button" onclick="setQuickCash(10)" class="py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-[11px] font-semibold text-slate-200 border border-slate-700">R$ 10</button>
+                    <button type="button" onclick="setQuickCash(20)" class="py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-[11px] font-semibold text-slate-200 border border-slate-700">R$ 20</button>
+                    <button type="button" onclick="setQuickCash(50)" class="py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-[11px] font-semibold text-slate-200 border border-slate-700">R$ 50</button>
+                    <button type="button" onclick="setQuickCash(100)" class="py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-[11px] font-semibold text-slate-200 border border-slate-700">R$ 100</button>
+                </div>
+
+                <!-- Highlighted Change Display -->
+                <div class="bg-amber-500/10 border border-amber-500/40 rounded-xl p-4 text-center">
+                    <span class="block text-[11px] uppercase tracking-wider font-bold text-amber-300">Troco para Entregar ao Cliente</span>
+                    <p id="checkout-change-display" class="text-3xl font-extrabold text-amber-400 mt-1">R$ 0,00</p>
+                </div>
+
+                <p id="cash-insufficient-warning" class="hidden text-xs text-red-400 font-semibold text-center">
+                    <i class="fa-solid fa-circle-exclamation mr-1"></i> Valor recebido insuficiente para cobrir a venda!
+                </p>
+
+                <div class="grid grid-cols-2 gap-2.5 pt-1">
+                    <button type="button" onclick="closeModal('cash-payment-modal')" class="py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition-all">
+                        Voltar
+                    </button>
+                    <button type="button" onclick="confirmCashAndFinishSale()" class="py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold text-xs transition-all shadow-lg shadow-emerald-500/20">
+                        <i class="fa-solid fa-check mr-1"></i> Confirmar & Vender
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shift / Cash Drawer Control Modal -->
+    <div id="shift-modal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl">
+            <div class="p-5 border-b border-slate-800 flex items-center justify-between">
+                <h3 class="font-bold text-base text-white flex items-center gap-2">
+                    <i class="fa-solid fa-vault text-amber-400"></i> Controle de Turno & Gaveta de Caixa
+                </h3>
+                <button onclick="closeModal('shift-modal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <div id="shift-modal-body" class="p-5 space-y-4">
+                <!-- Populated dynamically based on open/closed status -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Add/Edit Modal -->
+    <div id="product-modal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full overflow-hidden shadow-2xl">
+            <div class="p-5 border-b border-slate-800 flex items-center justify-between">
+                <h3 id="product-modal-title" class="font-bold text-base text-white">Cadastrar Produto</h3>
+                <button onclick="closeModal('product-modal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form onsubmit="saveProduct(event)" class="p-5 space-y-3.5">
+                <input type="hidden" id="prod-id">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Nome do Produto</label>
+                    <input type="text" id="prod-name" required placeholder="Ex: Coxinha de Frango c/ Catupiry" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white outline-none focus:border-amber-500">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Categoria</label>
+                        <select id="prod-category" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white outline-none focus:border-amber-500">
+                            <option value="Salgados">Salgados</option>
+                            <option value="Cafés">Cafés</option>
+                            <option value="Refrigerantes">Refrigerantes</option>
+                            <option value="Sucos & Água">Sucos & Água</option>
+                            <option value="Lanches">Lanches</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Preço de Venda (R$)</label>
+                        <input type="number" step="0.01" min="0.10" id="prod-price" required placeholder="6.50" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white outline-none focus:border-amber-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Estoque Atual</label>
+                        <input type="number" min="0" id="prod-stock" required placeholder="30" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white outline-none focus:border-amber-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Alerta Estoque Mínimo</label>
+                        <input type="number" min="1" id="prod-min-stock" required value="5" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white outline-none focus:border-amber-500">
+                    </div>
+                </div>
+                <button type="submit" class="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-sm transition-all mt-2">
+                    Salvar Produto
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Operator Login / Switch Modal -->
+    <div id="login-modal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full overflow-hidden shadow-2xl">
+            <div class="p-5 border-b border-slate-800 flex items-center justify-between">
+                <h3 class="font-bold text-base text-white flex items-center gap-2">
+                    <i class="fa-solid fa-user-shield text-amber-400"></i> Identificação do Operador
+                </h3>
+                <button onclick="closeModal('login-modal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="p-5 space-y-3">
+                <p class="text-xs text-slate-400">Selecione o funcionário responsável pelo caixa neste momento. Todas as vendas serão vinculadas ao operador ativo.</p>
+                <div id="login-users-list" class="space-y-2">
+                    <!-- Rendered via JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Print / PDF Cash Report Modal -->
+    <div id="print-report-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-2 sm:p-4">
+        <div id="print-modal-wrapper" class="bg-slate-900 border border-slate-700 rounded-2xl max-w-5xl w-full max-h-[94vh] flex flex-col overflow-hidden shadow-2xl">
+            
+            <!-- Modal Header (Hidden on Print) -->
+            <div class="no-print p-4 sm:p-5 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 bg-slate-900">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center text-base">
+                        <i class="fa-solid fa-print"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-sm sm:text-base text-white">Central de Relatórios & Impressão PDF</h3>
+                        <p class="text-[11px] text-slate-400">Configure o escopo, visualize o documento e salve em PDF ou imprima.</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="triggerPrintPDF()" class="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold text-xs sm:text-sm transition-all flex items-center gap-2 shadow-lg shadow-emerald-500/20">
+                        <i class="fa-solid fa-file-pdf"></i> Imprimir / Salvar PDF
+                    </button>
+                    <button onclick="closeModal('print-report-modal')" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors">
+                        <i class="fa-solid fa-xmark text-base"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Report Configuration Controls (Hidden on Print) -->
+            <div class="no-print bg-slate-950/90 border-b border-slate-800 p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <div>
+                    <label class="block text-[11px] font-semibold text-slate-400 mb-1">Tipo de Relatório</label>
+                    <select id="print-report-type" onchange="renderPrintableReport()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-emerald-500">
+                        <option value="completo">Relatório Completo (Tudo)</option>
+                        <option value="fechamento">Fechamento Diário Consolidado</option>
+                        <option value="operador">Relatório por Operador</option>
+                        <option value="gaveta">Resumo de Turno e Gaveta</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-semibold text-slate-400 mb-1">Data de Referência</label>
+                    <input type="date" id="print-report-date" onchange="renderPrintableReport()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-semibold text-slate-400 mb-1">Filtrar Operador</label>
+                    <select id="print-report-operator" onchange="renderPrintableReport()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-emerald-500">
+                        <option value="Todos">Todos os Operadores</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-semibold text-slate-400 mb-1">Formato de Papel</label>
+                    <select id="print-report-format" onchange="renderPrintableReport()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-emerald-500">
+                        <option value="a4">Folha A4 (Relatório Gerencial)</option>
+                        <option value="80mm">Cupom Térmico 80mm (Balcão)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Scrollable Document Preview Canvas -->
+            <div id="print-preview-scroll" class="flex-1 overflow-y-auto bg-slate-800/70 p-4 sm:p-6 flex justify-center items-start">
+                <div id="printable-document" class="format-a4 bg-white text-slate-900 w-full max-w-[210mm] h-fit shrink-0 rounded-lg shadow-2xl p-6 sm:p-10 font-sans">
+                    <!-- Rendered dynamically via JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== INITIAL DEMO DATA ====================
+        const DEFAULT_USERS = [
+            { id: 'u1', name: 'Admin (Gerente)', role: 'Administrador', pin: '1234', active: true },
+            { id: 'u2', name: 'João Silva', role: 'Operador de Caixa', pin: '1111', active: true },
+            { id: 'u3', name: 'Maria Oliveira', role: 'Operador de Caixa', pin: '2222', active: true }
+        ];
+
+        const DEFAULT_PRODUCTS = [
+            { id: 'p1', name: 'Coxinha de Frango c/ Catupiry', category: 'Salgados', price: 6.50, stock: 24, minStock: 6, icon: 'fa-drumstick-bite' },
+            { id: 'p2', name: 'Pão de Queijo Mineiro (Grande)', category: 'Salgados', price: 4.50, stock: 30, minStock: 8, icon: 'fa-bread-slice' },
+            { id: 'p3', name: 'Pastel Assado de Carne', category: 'Salgados', price: 7.00, stock: 2, minStock: 5, icon: 'fa-cookie' },
+            { id: 'p4', name: 'Empada de Palmito', category: 'Salgados', price: 6.00, stock: 15, minStock: 5, icon: 'fa-pie-chart' },
+            { id: 'p5', name: 'Café Expresso Tradicional', category: 'Cafés', price: 4.00, stock: 80, minStock: 15, icon: 'fa-mug-hot' },
+            { id: 'p6', name: 'Cappuccino Cremoso', category: 'Cafés', price: 7.50, stock: 40, minStock: 10, icon: 'fa-mug-saucer' },
+            { id: 'p7', name: 'Café com Leite (200ml)', category: 'Cafés', price: 5.00, stock: 50, minStock: 10, icon: 'fa-mug-hot' },
+            { id: 'p8', name: 'Coca-Cola Lata 350ml', category: 'Refrigerantes', price: 6.00, stock: 36, minStock: 10, icon: 'fa-bottle-droplet' },
+            { id: 'p9', name: 'Guaraná Antarctica Lata 350ml', category: 'Refrigerantes', price: 5.50, stock: 28, minStock: 8, icon: 'fa-bottle-droplet' },
+            { id: 'p10', name: 'Suco Natural de Laranja 300ml', category: 'Sucos & Água', price: 8.00, stock: 3, minStock: 5, icon: 'fa-glass-water' },
+            { id: 'p11', name: 'Água Mineral sem Gás 500ml', category: 'Sucos & Água', price: 3.50, stock: 45, minStock: 12, icon: 'fa-bottle-water' },
+            { id: 'p12', name: 'Misto Quente na Chapa', category: 'Lanches', price: 9.00, stock: 18, minStock: 5, icon: 'fa-burger' },
+            { id: 'p13', name: 'Pão na Chapa com Manteiga', category: 'Lanches', price: 4.50, stock: 25, minStock: 6, icon: 'fa-bread-slice' }
+        ];
+
+        function getTodayStr() {
+            const now = new Date();
+            const offset = now.getTimezoneOffset();
+            const local = new Date(now.getTime() - (offset * 60 * 1000));
+            return local.toISOString().split('T')[0];
+        }
+
+        function getTimeStr(dateObj = new Date()) {
+            return dateObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        const DEFAULT_SALES = [
+            {
+                id: 'V-1001',
+                date: getTodayStr(),
+                time: '08:15',
+                operatorId: 'u2',
+                operatorName: 'João Silva',
+                items: [
+                    { productId: 'p5', name: 'Café Expresso Tradicional', qty: 2, price: 4.00 },
+                    { productId: 'p2', name: 'Pão de Queijo Mineiro (Grande)', qty: 2, price: 4.50 }
+                ],
+                total: 17.00,
+                paymentMethod: 'Dinheiro',
+                received: 20.00,
+                change: 3.00
+            },
+            {
+                id: 'V-1002',
+                date: getTodayStr(),
+                time: '09:42',
+                operatorId: 'u2',
+                operatorName: 'João Silva',
+                items: [
+                    { productId: 'p1', name: 'Coxinha de Frango c/ Catupiry', qty: 1, price: 6.50 },
+                    { productId: 'p8', name: 'Coca-Cola Lata 350ml', qty: 1, price: 6.00 }
+                ],
+                total: 12.50,
+                paymentMethod: 'Pix',
+                received: 12.50,
+                change: 0.00
+            },
+            {
+                id: 'V-1003',
+                date: getTodayStr(),
+                time: '10:30',
+                operatorId: 'u3',
+                operatorName: 'Maria Oliveira',
+                items: [
+                    { productId: 'p12', name: 'Misto Quente na Chapa', qty: 2, price: 9.00 },
+                    { productId: 'p10', name: 'Suco Natural de Laranja 300ml', qty: 2, price: 8.00 }
+                ],
+                total: 34.00,
+                paymentMethod: 'Cartão de Crédito',
+                received: 34.00,
+                change: 0.00
+            }
+        ];
+
+        const DEFAULT_SHIFT = {
+            isOpen: true,
+            openedAt: '08:00',
+            openedDate: getTodayStr(),
+            openedBy: 'João Silva',
+            initialCash: 100.00,
+            adjustments: [
+                // { type: 'reforco' | 'sangria', amount: 20, reason: 'Troco moedas', time: '09:00', operator: 'João Silva' }
+            ],
+            history: [
+                { action: 'Abertura de Turno', amount: 100.00, operator: 'João Silva', time: '08:00', date: getTodayStr(), note: 'Fundo de troco inicial' }
+            ]
+        };
+
+        // ==================== APPLICATION STATE ====================
+        let state = {
+            users: [],
+            products: [],
+            sales: [],
+            stockMovements: [],
+            shift: null,
+            activeUserId: 'u2',
+            cart: [],
+            selectedCategory: 'Todos',
+            onlyCriticalFilter: false,
+            selectedPaymentMethod: 'Pix',
+            cashReceivedAmount: 0,
+            paymentChartInstance: null
+        };
+
+        // ==================== STORAGE PERSISTENCE ====================
+        function loadState() {
+            const saved = localStorage.getItem('techpereira_pdv_quiosque_v1');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                state.users = parsed.users || DEFAULT_USERS;
+                state.products = parsed.products || DEFAULT_PRODUCTS;
+                state.sales = parsed.sales || DEFAULT_SALES;
+                state.stockMovements = parsed.stockMovements || [];
+                state.shift = parsed.shift || DEFAULT_SHIFT;
+                state.activeUserId = parsed.activeUserId || 'u2';
+            } else {
+                state.users = JSON.parse(JSON.stringify(DEFAULT_USERS));
+                state.products = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
+                state.sales = JSON.parse(JSON.stringify(DEFAULT_SALES));
+                state.stockMovements = [
+                    { date: getTodayStr(), time: '07:45', product: 'Pão de Queijo Mineiro (Grande)', type: 'Entrada', qty: 30, operator: 'Admin (Gerente)' },
+                    { date: getTodayStr(), time: '07:50', product: 'Coxinha de Frango c/ Catupiry', type: 'Entrada', qty: 24, operator: 'Admin (Gerente)' }
+                ];
+                state.shift = JSON.parse(JSON.stringify(DEFAULT_SHIFT));
+                state.activeUserId = 'u2';
+                saveState();
+            }
+        }
+
+        function saveState() {
+            localStorage.setItem('techpereira_pdv_quiosque_v1', JSON.stringify({
+                users: state.users,
+                products: state.products,
+                sales: state.sales,
+                stockMovements: state.stockMovements,
+                shift: state.shift,
+                activeUserId: state.activeUserId
+            }));
+        }
+
+        function resetDemoData() {
+            Swal.fire({
+                title: 'Restaurar dados de demonstração?',
+                text: 'Isso irá reiniciar produtos, vendas de exemplo e o caixa inicial.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#f59e0b',
+                cancelButtonColor: '#475569',
+                confirmButtonText: 'Sim, restaurar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    localStorage.removeItem('techpereira_pdv_quiosque_v1');
+                    state.cart = [];
+                    loadState();
+                    refreshAllUI();
+                    Swal.fire({ icon: 'success', title: 'Dados Restaurados!', timer: 1500, showConfirmButton: false });
+                }
+            });
+        }
+
+        // ==================== FORMATTERS ====================
+        function formatCurrency(val) {
+            return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        function getActiveUser() {
+            return state.users.find(u => u.id === state.activeUserId) || state.users[0];
+        }
+
+        // ==================== NAVIGATION & UI UPDATES ====================
+        function switchTab(tabName) {
+            ['pdv', 'produtos', 'relatorios', 'usuarios'].forEach(t => {
+                document.getElementById(`view-${t}`).classList.add('hidden');
+                const btn = document.getElementById(`tab-${t}`);
+                btn.classList.remove('bg-amber-500', 'text-slate-950', 'shadow-sm');
+                btn.classList.add('text-slate-400');
+            });
+
+            document.getElementById(`view-${tabName}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`tab-${tabName}`);
+            activeBtn.classList.add('bg-amber-500', 'text-slate-950', 'shadow-sm');
+            activeBtn.classList.remove('text-slate-400');
+
+            if (tabName === 'produtos') renderStockTable();
+            if (tabName === 'relatorios') renderReports();
+            if (tabName === 'usuarios') renderUsersGrid();
+        }
+
+        function updateHeaderStatus() {
+            const user = getActiveUser();
+            const initials = user.name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
+            document.getElementById('active-user-avatar').textContent = initials;
+            document.getElementById('active-user-name').textContent = user.name;
+            document.getElementById('active-user-role').textContent = `${user.role} • Trocar`;
+
+            const shiftBtn = document.getElementById('shift-status-btn');
+            const shiftDot = document.getElementById('shift-dot');
+            const shiftText = document.getElementById('shift-status-text');
+            const closedBanner = document.getElementById('closed-register-banner');
+
+            if (state.shift.isOpen) {
+                shiftBtn.className = 'flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-semibold transition-all bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20';
+                shiftDot.className = 'relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 pulse-dot';
+                shiftText.textContent = 'Caixa Aberto';
+                closedBanner.classList.add('hidden');
+            } else {
+                shiftBtn.className = 'flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-semibold transition-all bg-red-500/10 border-red-500/30 text-red-400 hover:bg-red-500/20';
+                shiftDot.className = 'relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500';
+                shiftText.textContent = 'Caixa Fechado';
+                closedBanner.classList.remove('hidden');
+            }
+
+            // Low stock badge
+            const lowCount = state.products.filter(p => p.stock <= p.minStock).length;
+            const badge = document.getElementById('badge-low-stock');
+            if (lowCount > 0) {
+                badge.textContent = lowCount;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        // ==================== PDV & CART LOGIC ====================
+        function setCategory(cat) {
+            state.selectedCategory = cat;
+            state.onlyCriticalFilter = false;
+            document.querySelectorAll('.cat-pill').forEach(btn => {
+                if (btn.textContent.trim().includes(cat) || (cat === 'Todos' && btn.textContent.trim() === 'Todos')) {
+                    btn.className = 'cat-pill active px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-amber-500 text-slate-950 whitespace-nowrap transition-all';
+                } else {
+                    btn.className = 'cat-pill px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition-all';
+                }
+            });
+            renderPDVProducts();
+        }
+
+        function toggleCriticalFilter() {
+            state.onlyCriticalFilter = !state.onlyCriticalFilter;
+            renderPDVProducts();
+        }
+
+        function promptDirectRestock(event, productId) {
+            event.stopPropagation();
+            const product = state.products.find(p => p.id === productId);
+            if (!product) return;
+
+            Swal.fire({
+                title: 'Reposição Rápida de Estoque',
+                html: `
+                    <p class="text-xs text-slate-300 mb-3">Produto: <strong class="text-amber-400">${product.name}</strong><br>Estoque atual: <strong>${product.stock} un.</strong></p>
+                    <input type="number" id="swal-restock-qty" class="swal2-input" value="15" min="1" placeholder="Quantidade a adicionar">
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Confirmar Reposição',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#10b981',
+                preConfirm: () => {
+                    const qty = parseInt(document.getElementById('swal-restock-qty').value);
+                    if (!qty || qty <= 0) {
+                        Swal.showValidationMessage('Informe uma quantidade válida maior que zero.');
+                        return false;
+                    }
+                    return qty;
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    quickRestock(productId, result.value);
+                }
+            });
+        }
+
+        function renderPDVProducts() {
+            const grid = document.getElementById('pdv-product-grid');
+            const search = document.getElementById('pdv-search').value.toLowerCase();
+
+            // Update Top Critical Banner
+            const criticalItems = state.products.filter(p => p.stock <= p.minStock);
+            const critBanner = document.getElementById('pdv-critical-banner');
+            const critTitle = document.getElementById('pdv-critical-title');
+            const critSubtitle = document.getElementById('pdv-critical-subtitle');
+            const critFilterBtn = document.getElementById('btn-filter-critical');
+
+            if (criticalItems.length > 0) {
+                critBanner.classList.remove('hidden');
+                const outCount = criticalItems.filter(p => p.stock <= 0).length;
+                const lowCount = criticalItems.length - outCount;
+                critTitle.textContent = `${criticalItems.length} ${criticalItems.length === 1 ? 'produto precisa' : 'produtos precisam'} de reposição imediata!`;
+                critSubtitle.textContent = `${lowCount} em nível crítico • ${outCount} esgotado(s) — Use "+ Repor" direto no card.`;
+                critFilterBtn.textContent = state.onlyCriticalFilter ? 'Mostrar Todos os Produtos' : `Ver Apenas Críticos (${criticalItems.length})`;
+                critFilterBtn.className = state.onlyCriticalFilter
+                    ? 'px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 border border-amber-500/40 font-bold text-[11px] transition-all whitespace-nowrap'
+                    : 'px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-[11px] transition-all whitespace-nowrap';
+            } else {
+                critBanner.classList.add('hidden');
+                state.onlyCriticalFilter = false;
+            }
+
+            const filtered = state.products.filter(p => {
+                const matchesCat = state.selectedCategory === 'Todos' || p.category === state.selectedCategory;
+                const matchesSearch = p.name.toLowerCase().includes(search) || p.category.toLowerCase().includes(search);
+                const matchesCritical = !state.onlyCriticalFilter || p.stock <= p.minStock;
+                return matchesCat && matchesSearch && matchesCritical;
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `<div class="col-span-full text-center py-12 text-slate-500 text-sm">Nenhum produto encontrado para o filtro selecionado.</div>`;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(p => {
+                const isOut = p.stock <= 0;
+                const isLow = p.stock > 0 && p.stock <= p.minStock;
+                const inCart = state.cart.find(c => c.productId === p.id);
+                const qtyInCart = inCart ? inCart.qty : 0;
+
+                let stockBadge = `<span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">Est: ${p.stock}</span>`;
+                let cardClasses = `bg-slate-900 hover:bg-slate-850 border ${qtyInCart > 0 ? 'border-amber-500/60 ring-1 ring-amber-500/30' : 'border-slate-800 hover:border-slate-700'}`;
+                let alertStrip = '';
+
+                if (isOut) {
+                    stockBadge = `<span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-red-500 text-white shadow-sm">ESGOTADO</span>`;
+                    cardClasses = `bg-red-950/20 border-2 border-dashed border-red-500/70`;
+                    alertStrip = `
+                        <div class="mt-2 px-2 py-1 rounded-lg bg-red-500/20 border border-red-500/30 flex items-center justify-between gap-1">
+                            <span class="text-[10px] font-extrabold text-red-300 uppercase tracking-wide"><i class="fa-solid fa-ban mr-1"></i>Repor Estoque</span>
+                            <span onclick="promptDirectRestock(event, '${p.id}')" class="px-2 py-0.5 rounded bg-red-500 hover:bg-red-400 text-white font-extrabold text-[10px] cursor-pointer transition-colors">+ Repor</span>
+                        </div>
+                    `;
+                } else if (isLow) {
+                    stockBadge = `<span class="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-amber-500 text-slate-950 animate-pulse shadow-sm">Restam ${p.stock}</span>`;
+                    cardClasses = `bg-gradient-to-b from-amber-950/30 to-slate-900 border-2 critical-stock-card`;
+                    alertStrip = `
+                        <div class="mt-2 px-2 py-1 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-between gap-1">
+                            <span class="text-[10px] font-extrabold text-amber-300 uppercase tracking-wide"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Reposição Urgente</span>
+                            <span onclick="promptDirectRestock(event, '${p.id}')" class="px-2 py-0.5 rounded bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-[10px] cursor-pointer transition-colors">+ Repor</span>
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div onclick="${isOut ? `promptDirectRestock(event, '${p.id}')` : `addToCart('${p.id}')`}" role="button" tabindex="0" class="group relative ${cardClasses} rounded-2xl p-3.5 text-left flex flex-col justify-between transition-all cursor-pointer select-none ${isOut ? 'opacity-85 hover:opacity-100' : 'active:scale-[0.98]'}">
+                        ${qtyInCart > 0 ? `<span class="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-amber-500 text-slate-950 font-extrabold text-xs flex items-center justify-center shadow-md z-10">${qtyInCart}</span>` : ''}
+                        <div>
+                            <div class="flex items-center justify-between gap-1 mb-2.5">
+                                <div class="w-9 h-9 rounded-xl ${isLow ? 'bg-amber-500/20 text-amber-400' : isOut ? 'bg-red-500/20 text-red-400' : 'bg-slate-800 group-hover:bg-amber-500/15 text-amber-400'} flex items-center justify-center text-sm transition-colors">
+                                    <i class="fa-solid ${p.icon || 'fa-utensils'}"></i>
+                                </div>
+                                ${stockBadge}
+                            </div>
+                            <span class="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">${p.category}</span>
+                            <h3 class="font-bold text-xs sm:text-sm text-slate-100 leading-snug mt-0.5 line-clamp-2">${p.name}</h3>
+                            ${alertStrip}
+                        </div>
+                        <div class="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center justify-between">
+                            <span class="font-extrabold text-sm sm:text-base ${isOut ? 'text-slate-500' : 'text-emerald-400'}">${formatCurrency(p.price)}</span>
+                            ${isOut
+                                ? `<span class="px-2.5 py-1 rounded-lg bg-red-500/20 text-red-300 font-bold text-[11px]">Repor</span>`
+                                : `<span class="w-7 h-7 rounded-lg bg-slate-800 group-hover:bg-emerald-500 group-hover:text-slate-950 text-slate-300 flex items-center justify-center text-xs transition-colors"><i class="fa-solid fa-plus"></i></span>`
+                            }
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function addToCart(productId) {
+            if (!state.shift.isOpen) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Caixa Fechado!',
+                    text: 'Abra o turno de caixa antes de iniciar uma venda.',
+                    confirmButtonColor: '#f59e0b',
+                    confirmButtonText: 'Abrir Caixa'
+                }).then(r => { if (r.isConfirmed) openShiftControlModal(); });
+                return;
+            }
+
+            const product = state.products.find(p => p.id === productId);
+            if (!product || product.stock <= 0) return;
+
+            const existing = state.cart.find(item => item.productId === productId);
+            if (existing) {
+                if (existing.qty >= product.stock) {
+                    Swal.fire({ toast: true, position: 'top-end', icon: 'warning', title: 'Limite de estoque atingido!', showConfirmButton: false, timer: 1800 });
+                    return;
+                }
+                existing.qty += 1;
+            } else {
+                state.cart.push({
+                    productId: product.id,
+                    name: product.name,
+                    price: product.price,
+                    qty: 1
+                });
+            }
+
+            renderCart();
+            renderPDVProducts();
+        }
+
+        function updateCartQty(productId, delta) {
+            const index = state.cart.findIndex(item => item.productId === productId);
+            if (index === -1) return;
+
+            const product = state.products.find(p => p.id === productId);
+            const newQty = state.cart[index].qty + delta;
+
+            if (newQty <= 0) {
+                state.cart.splice(index, 1);
+            } else if (product && newQty <= product.stock) {
+                state.cart[index].qty = newQty;
+            } else {
+                Swal.fire({ toast: true, position: 'top-end', icon: 'warning', title: 'Estoque máximo disponível atingido!', showConfirmButton: false, timer: 1800 });
+            }
+
+            renderCart();
+            renderPDVProducts();
+        }
+
+        function clearCart() {
+            state.cart = [];
+            renderCart();
+            renderPDVProducts();
+        }
+
+        function getCartTotal() {
+            return state.cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+        }
+
+        function renderCart() {
+            const container = document.getElementById('cart-items-container');
+            const totalItemsEl = document.getElementById('cart-total-items');
+            const totalValEl = document.getElementById('cart-total-value');
+            const checkoutBtn = document.getElementById('btn-checkout');
+
+            if (state.cart.length === 0) {
+                container.innerHTML = `
+                    <div class="h-full flex flex-col items-center justify-center text-center py-10 text-slate-500">
+                        <i class="fa-solid fa-basket-shopping text-3xl mb-2 opacity-40"></i>
+                        <p class="text-xs font-medium">Nenhum item adicionado</p>
+                        <p class="text-[11px] mt-0.5">Clique nos produtos ao lado para lançar</p>
+                    </div>
+                `;
+                totalItemsEl.textContent = '0 un.';
+                totalValEl.textContent = 'R$ 0,00';
+                checkoutBtn.disabled = true;
+                return;
+            }
+
+            const totalQty = state.cart.reduce((acc, i) => acc + i.qty, 0);
+            const totalPrice = getCartTotal();
+
+            container.innerHTML = state.cart.map(item => `
+                <div class="bg-slate-950 border border-slate-800/90 rounded-xl p-3 flex items-center justify-between gap-2">
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs font-bold text-slate-100 truncate">${item.name}</p>
+                        <p class="text-[11px] text-slate-400">${formatCurrency(item.price)} un. • <span class="text-emerald-400 font-semibold">${formatCurrency(item.price * item.qty)}</span></p>
+                    </div>
+                    <div class="flex items-center gap-1.5 bg-slate-900 border border-slate-800 rounded-lg p-1 shrink-0">
+                        <button onclick="updateCartQty('${item.productId}', -1)" class="w-6 h-6 rounded-md bg-slate-800 hover:bg-red-500/20 hover:text-red-400 text-slate-300 flex items-center justify-center text-xs transition-colors">
+                            <i class="fa-solid fa-minus"></i>
+                        </button>
+                        <span class="w-6 text-center text-xs font-bold text-white">${item.qty}</span>
+                        <button onclick="updateCartQty('${item.productId}', 1)" class="w-6 h-6 rounded-md bg-slate-800 hover:bg-emerald-500/20 hover:text-emerald-400 text-slate-300 flex items-center justify-center text-xs transition-colors">
+                            <i class="fa-solid fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            totalItemsEl.textContent = `${totalQty} un.`;
+            totalValEl.textContent = formatCurrency(totalPrice);
+            checkoutBtn.disabled = false;
+        }
+
+        // ==================== CHECKOUT & CHANGE CALCULATION ====================
+        function openCheckoutModal() {
+            if (!state.shift.isOpen) {
+                Swal.fire({ icon: 'error', title: 'Caixa Fechado', text: 'Abra o caixa antes de finalizar vendas.' });
+                return;
+            }
+            if (state.cart.length === 0) return;
+
+            const total = getCartTotal();
+            state.cashReceivedAmount = 0;
+            document.getElementById('checkout-total-display').textContent = formatCurrency(total);
+            document.getElementById('cash-received-input').value = '';
+            document.getElementById('checkout-change-display').textContent = 'R$ 0,00';
+            document.getElementById('cash-insufficient-warning').classList.add('hidden');
+            document.getElementById('cash-summary-preview').classList.add('hidden');
+
+            selectPaymentMethod('Pix', false);
+            openModal('checkout-modal');
+        }
+
+        function selectPaymentMethod(method, triggerCashPopup = true) {
+            state.selectedPaymentMethod = method;
+            document.querySelectorAll('.pay-method-btn').forEach(btn => {
+                if (btn.dataset.method === method) {
+                    btn.className = 'pay-method-btn p-3 rounded-xl border border-emerald-500 bg-emerald-500/15 text-emerald-300 font-bold text-xs flex items-center justify-center gap-2 transition-all';
+                } else {
+                    btn.className = 'pay-method-btn p-3 rounded-xl border border-slate-700 bg-slate-800/60 text-slate-300 hover:bg-slate-800 font-bold text-xs flex items-center justify-center gap-2 transition-all';
+                }
+            });
+
+            const summaryPreview = document.getElementById('cash-summary-preview');
+            if (method === 'Dinheiro') {
+                if (state.cashReceivedAmount >= getCartTotal()) {
+                    summaryPreview.classList.remove('hidden');
+                }
+                if (triggerCashPopup) {
+                    openCashPaymentModal();
+                }
+            } else {
+                summaryPreview.classList.add('hidden');
+            }
+        }
+
+        function openCashPaymentModal() {
+            const total = getCartTotal();
+            document.getElementById('cash-modal-total').textContent = formatCurrency(total);
+            const input = document.getElementById('cash-received-input');
+            input.value = state.cashReceivedAmount > 0 ? state.cashReceivedAmount.toFixed(2) : '';
+            calculateChange();
+            openModal('cash-payment-modal');
+            setTimeout(() => {
+                input.focus();
+                input.select();
+            }, 100);
+        }
+
+        function setQuickCash(val) {
+            const total = getCartTotal();
+            const input = document.getElementById('cash-received-input');
+            input.value = val === 'exact' ? total.toFixed(2) : val.toFixed(2);
+            calculateChange();
+        }
+
+        function calculateChange() {
+            const total = getCartTotal();
+            const received = parseFloat(document.getElementById('cash-received-input').value) || 0;
+            const changeEl = document.getElementById('checkout-change-display');
+            const warnEl = document.getElementById('cash-insufficient-warning');
+
+            if (received === 0) {
+                changeEl.textContent = 'R$ 0,00';
+                warnEl.classList.add('hidden');
+                return;
+            }
+
+            if (received < total) {
+                changeEl.textContent = 'R$ 0,00';
+                warnEl.classList.remove('hidden');
+            } else {
+                const change = received - total;
+                changeEl.textContent = formatCurrency(change);
+                warnEl.classList.add('hidden');
+            }
+        }
+
+        function confirmCashAndFinishSale() {
+            const total = getCartTotal();
+            const received = parseFloat(document.getElementById('cash-received-input').value) || 0;
+
+            if (received < total) {
+                document.getElementById('cash-insufficient-warning').classList.remove('hidden');
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Valor Insuficiente',
+                    text: `O valor recebido (${formatCurrency(received)}) é menor que o total da venda (${formatCurrency(total)}).`,
+                    confirmButtonColor: '#f59e0b'
+                });
+                return;
+            }
+
+            state.cashReceivedAmount = received;
+            const change = received - total;
+
+            document.getElementById('preview-cash-received').textContent = formatCurrency(received);
+            document.getElementById('preview-cash-change').textContent = formatCurrency(change);
+            document.getElementById('cash-summary-preview').classList.remove('hidden');
+
+            closeModal('cash-payment-modal');
+            confirmSale();
+        }
+
+        function confirmSale() {
+            const total = getCartTotal();
+            const method = state.selectedPaymentMethod;
+            let received = total;
+            let change = 0;
+
+            if (method === 'Dinheiro') {
+                received = state.cashReceivedAmount || parseFloat(document.getElementById('cash-received-input').value) || 0;
+                if (received < total) {
+                    openCashPaymentModal();
+                    return;
+                }
+                change = received - total;
+            }
+
+            const operator = getActiveUser();
+            const saleId = 'V-' + (1001 + state.sales.length);
+            const now = new Date();
+            const newlyCriticalProducts = [];
+
+            // Deduct stock & log movement
+            state.cart.forEach(item => {
+                const prod = state.products.find(p => p.id === item.productId);
+                if (prod) {
+                    const prevStock = prod.stock;
+                    prod.stock = Math.max(0, prod.stock - item.qty);
+                    if (prod.stock <= prod.minStock && prevStock > prod.minStock) {
+                        newlyCriticalProducts.push(prod.name);
+                    }
+                }
+            });
+
+            const newSale = {
+                id: saleId,
+                date: getTodayStr(),
+                time: getTimeStr(now),
+                operatorId: operator.id,
+                operatorName: operator.name,
+                items: JSON.parse(JSON.stringify(state.cart)),
+                total: total,
+                paymentMethod: method,
+                received: received,
+                change: change
+            };
+
+            state.sales.unshift(newSale);
+            state.cart = [];
+            saveState();
+
+            closeModal('checkout-modal');
+            refreshAllUI();
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Venda Registrada!',
+                html: `
+                    <div class="text-left bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs space-y-1.5 mt-2">
+                        <div class="flex justify-between"><span class="text-slate-400">Comprovante:</span><strong class="text-white">${saleId}</strong></div>
+                        <div class="flex justify-between"><span class="text-slate-400">Operador:</span><span class="text-slate-200">${operator.name}</span></div>
+                        <div class="flex justify-between"><span class="text-slate-400">Pagamento:</span><span class="text-amber-400 font-semibold">${method}</span></div>
+                        <div class="flex justify-between border-t border-slate-800 pt-1.5"><span class="text-slate-400">Total Venda:</span><strong class="text-emerald-400 text-sm">${formatCurrency(total)}</strong></div>
+                        ${method === 'Dinheiro' ? `
+                            <div class="flex justify-between"><span class="text-slate-400">Recebido:</span><span>${formatCurrency(received)}</span></div>
+                            <div class="flex justify-between"><span class="text-slate-400">Troco Devolvido:</span><strong class="text-amber-400 text-sm">${formatCurrency(change)}</strong></div>
+                        ` : ''}
+                    </div>
+                    ${newlyCriticalProducts.length > 0 ? `
+                        <div class="mt-3 p-2.5 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-300 text-xs font-semibold">
+                            <i class="fa-solid fa-triangle-exclamation mr-1"></i> Estoque crítico atingido: ${newlyCriticalProducts.join(', ')}
+                        </div>
+                    ` : ''}
+                `,
+                confirmButtonColor: '#10b981',
+                confirmButtonText: 'Próximo Atendimento'
+            });
+        }
+
+        // ==================== SHIFT / CASH DRAWER CONTROL ====================
+        function getDrawerMetrics() {
+            const today = getTodayStr();
+            const todayCashSales = state.sales
+                .filter(s => s.date === today && s.paymentMethod === 'Dinheiro')
+                .reduce((acc, s) => acc + s.total, 0);
+
+            const totalReforcos = (state.shift.adjustments || [])
+                .filter(a => a.type === 'reforco')
+                .reduce((acc, a) => acc + a.amount, 0);
+
+            const totalSangrias = (state.shift.adjustments || [])
+                .filter(a => a.type === 'sangria')
+                .reduce((acc, a) => acc + a.amount, 0);
+
+            const expectedCash = (state.shift.initialCash || 0) + todayCashSales + totalReforcos - totalSangrias;
+
+            return { todayCashSales, totalReforcos, totalSangrias, expectedCash };
+        }
+
+        function openShiftControlModal() {
+            const body = document.getElementById('shift-modal-body');
+            const user = getActiveUser();
+
+            if (!state.shift.isOpen) {
+                body.innerHTML = `
+                    <div class="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 text-xs text-amber-200">
+                        <p class="font-bold text-sm text-amber-400 mb-1">Abertura de Novo Turno</p>
+                        <p>Operador responsável: <strong>${user.name}</strong>. Informe o valor em dinheiro disponível na gaveta para troco inicial.</p>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1.5">Fundo de Troco Inicial (R$)</label>
+                        <input type="number" step="0.01" id="open-shift-amount" value="100.00" class="w-full bg-slate-950 border border-slate-700 focus:border-emerald-500 rounded-xl px-4 py-3 text-lg font-bold text-white outline-none">
+                    </div>
+                    <button onclick="openNewShift()" class="w-full py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold text-sm transition-all">
+                        <i class="fa-solid fa-lock-open mr-1"></i> Confirmar Abertura de Caixa
+                    </button>
+                `;
+            } else {
+                const metrics = getDrawerMetrics();
+                body.innerHTML = `
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-2 text-xs">
+                        <div class="flex justify-between text-slate-400">
+                            <span>Aberto às ${state.shift.openedAt} por:</span>
+                            <strong class="text-white">${state.shift.openedBy}</strong>
+                        </div>
+                        <div class="flex justify-between text-slate-300">
+                            <span>(+) Fundo de Troco Inicial:</span>
+                            <span>${formatCurrency(state.shift.initialCash)}</span>
+                        </div>
+                        <div class="flex justify-between text-emerald-400">
+                            <span>(+) Vendas em Dinheiro (Hoje):</span>
+                            <span>${formatCurrency(metrics.todayCashSales)}</span>
+                        </div>
+                        <div class="flex justify-between text-blue-400">
+                            <span>(+) Reforços / Suprimentos:</span>
+                            <span>${formatCurrency(metrics.totalReforcos)}</span>
+                        </div>
+                        <div class="flex justify-between text-red-400">
+                            <span>(-) Sangrias / Retiradas:</span>
+                            <span>${formatCurrency(metrics.totalSangrias)}</span>
+                        </div>
+                        <div class="flex justify-between border-t border-slate-800 pt-2 text-sm font-extrabold text-amber-400">
+                            <span>Saldo Esperado em Gaveta:</span>
+                            <span>${formatCurrency(metrics.expectedCash)}</span>
+                        </div>
+                    </div>
+
+                    <!-- Sangria / Reforço Quick Action -->
+                    <div class="border border-slate-800 rounded-xl p-3.5 space-y-2.5">
+                        <p class="text-xs font-bold text-slate-300">Movimentação Avulsa (Sangria ou Reforço)</p>
+                        <div class="grid grid-cols-3 gap-2">
+                            <select id="adj-type" class="bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-white outline-none">
+                                <option value="sangria">Sangria (-)</option>
+                                <option value="reforco">Reforço (+)</option>
+                            </select>
+                            <input type="number" step="0.01" id="adj-amount" placeholder="Valor R$" class="bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-white outline-none">
+                            <button onclick="addCashAdjustment()" class="bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold text-xs rounded-lg px-3 py-2 transition-all">Lançar</button>
+                        </div>
+                        <input type="text" id="adj-reason" placeholder="Motivo (ex: Pagamento fornecedor gelo / Troco)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white outline-none">
+                    </div>
+
+                    <!-- Close Shift Section -->
+                    <div class="border-t border-slate-800 pt-3 space-y-2.5">
+                        <label class="block text-xs font-bold text-slate-300">Conferência Física para Fechar Turno (R$ na Gaveta)</label>
+                        <input type="number" step="0.01" id="close-shift-counted" value="${metrics.expectedCash.toFixed(2)}" class="w-full bg-slate-950 border border-slate-700 focus:border-red-500 rounded-xl px-3.5 py-2.5 text-base font-bold text-white outline-none">
+                        <button onclick="closeCurrentShift()" class="w-full py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white font-extrabold text-sm transition-all">
+                            <i class="fa-solid fa-lock mr-1"></i> Encerrar Turno e Fechar Caixa
+                        </button>
+                    </div>
+                `;
+            }
+
+            openModal('shift-modal');
+        }
+
+        function openNewShift() {
+            const amount = parseFloat(document.getElementById('open-shift-amount').value) || 0;
+            const user = getActiveUser();
+            const now = new Date();
+
+            state.shift.isOpen = true;
+            state.shift.openedAt = getTimeStr(now);
+            state.shift.openedDate = getTodayStr();
+            state.shift.openedBy = user.name;
+            state.shift.initialCash = amount;
+            state.shift.adjustments = [];
+            state.shift.history.unshift({
+                action: 'Abertura de Turno',
+                amount: amount,
+                operator: user.name,
+                time: getTimeStr(now),
+                date: getTodayStr(),
+                note: 'Fundo de troco inicial'
+            });
+
+            saveState();
+            closeModal('shift-modal');
+            refreshAllUI();
+            Swal.fire({ icon: 'success', title: 'Caixa Aberto!', text: `Turno iniciado por ${user.name} com ${formatCurrency(amount)}.`, timer: 2000, showConfirmButton: false });
+        }
+
+        function addCashAdjustment() {
+            const type = document.getElementById('adj-type').value;
+            const amount = parseFloat(document.getElementById('adj-amount').value);
+            const reason = document.getElementById('adj-reason').value.trim() || (type === 'sangria' ? 'Retirada de caixa' : 'Reforço de troco');
+
+            if (!amount || amount <= 0) {
+                Swal.fire({ toast: true, position: 'top-end', icon: 'warning', title: 'Informe um valor válido!', showConfirmButton: false, timer: 1800 });
+                return;
+            }
+
+            const user = getActiveUser();
+            const now = new Date();
+            state.shift.adjustments.push({ type, amount, reason, time: getTimeStr(now), operator: user.name });
+            state.shift.history.unshift({
+                action: type === 'sangria' ? 'Sangria (-)' : 'Reforço (+)',
+                amount: amount,
+                operator: user.name,
+                time: getTimeStr(now),
+                date: getTodayStr(),
+                note: reason
+            });
+
+            saveState();
+            openShiftControlModal();
+            renderReports();
+            Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Movimentação registrada!', showConfirmButton: false, timer: 1600 });
+        }
+
+        function closeCurrentShift() {
+            const counted = parseFloat(document.getElementById('close-shift-counted').value) || 0;
+            const metrics = getDrawerMetrics();
+            const diff = counted - metrics.expectedCash;
+            const user = getActiveUser();
+            const now = new Date();
+
+            state.shift.isOpen = false;
+            state.shift.lastClosedCounted = counted;
+            state.shift.lastClosedExpected = metrics.expectedCash;
+            state.shift.lastClosedDiff = diff;
+            state.shift.lastClosedBy = user.name;
+            state.shift.lastClosedAt = getTimeStr(now);
+
+            state.shift.history.unshift({
+                action: 'Fechamento de Turno',
+                amount: counted,
+                operator: user.name,
+                time: getTimeStr(now),
+                date: getTodayStr(),
+                note: `Esperado: ${formatCurrency(metrics.expectedCash)} | Diferença: ${formatCurrency(diff)}`
+            });
+
+            saveState();
+            closeModal('shift-modal');
+            refreshAllUI();
+
+            let diffBadge = `<span class="text-emerald-400 font-bold">Caixa Batido (R$ 0,00)</span>`;
+            if (diff < -0.01) diffBadge = `<span class="text-red-400 font-bold">Falta / Quebra: ${formatCurrency(diff)}</span>`;
+            if (diff > 0.01) diffBadge = `<span class="text-blue-400 font-bold">Sobra de Caixa: +${formatCurrency(diff)}</span>`;
+
+            Swal.fire({
+                icon: 'info',
+                title: 'Fechamento de Turno Concluído',
+                html: `
+                    <div class="text-left bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs space-y-2 mt-2">
+                        <div class="flex justify-between"><span class="text-slate-400">Responsável Fechamento:</span><strong class="text-white">${user.name}</strong></div>
+                        <div class="flex justify-between"><span class="text-slate-400">Saldo Esperado:</span><span>${formatCurrency(metrics.expectedCash)}</span></div>
+                        <div class="flex justify-between"><span class="text-slate-400">Valor Conferido:</span><strong class="text-white">${formatCurrency(counted)}</strong></div>
+                        <div class="flex justify-between border-t border-slate-800 pt-2"><span class="text-slate-400">Resultado:</span>${diffBadge}</div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonColor: '#10b981',
+                cancelButtonColor: '#475569',
+                confirmButtonText: '<i class="fa-solid fa-file-pdf mr-1"></i> Imprimir Comprovante PDF',
+                cancelButtonText: 'Concluir'
+            }).then((res) => {
+                if (res.isConfirmed) {
+                    openPrintReportModal('fechamento', '80mm');
+                }
+            });
+        }
+
+        // ==================== PRINT & PDF REPORT GENERATOR ====================
+        function openPrintReportModal(defaultType = 'completo', defaultFormat = 'a4') {
+            const reportDateEl = document.getElementById('report-date-filter');
+            const reportOpEl = document.getElementById('report-operator-filter');
+
+            const printDateEl = document.getElementById('print-report-date');
+            const printOpEl = document.getElementById('print-report-operator');
+            const printTypeEl = document.getElementById('print-report-type');
+            const printFormatEl = document.getElementById('print-report-format');
+
+            printDateEl.value = (reportDateEl && reportDateEl.value) ? reportDateEl.value : getTodayStr();
+            printOpEl.innerHTML = `<option value="Todos">Todos os Operadores</option>` +
+                state.users.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
+            printOpEl.value = (reportOpEl && reportOpEl.value) ? reportOpEl.value : 'Todos';
+
+            printTypeEl.value = defaultType;
+            printFormatEl.value = defaultFormat;
+
+            renderPrintableReport();
+            openModal('print-report-modal');
+        }
+
+        function triggerPrintPDF() {
+            window.print();
+        }
+
+        function renderPrintableReport() {
+            const type = document.getElementById('print-report-type').value;
+            const selectedDate = document.getElementById('print-report-date').value;
+            const selectedOp = document.getElementById('print-report-operator').value;
+            const format = document.getElementById('print-report-format').value;
+
+            const docEl = document.getElementById('printable-document');
+            if (format === '80mm') {
+                docEl.className = 'format-80mm bg-white text-slate-900 w-[300px] sm:w-[320px] h-fit shrink-0 rounded-lg shadow-2xl p-4 font-mono text-[11px] leading-snug';
+            } else {
+                docEl.className = 'format-a4 bg-white text-slate-900 w-full max-w-[210mm] h-fit shrink-0 rounded-lg shadow-2xl p-6 sm:p-10 font-sans text-xs';
+            }
+
+            const filteredSales = state.sales.filter(s => {
+                const matchDate = !selectedDate || s.date === selectedDate;
+                const matchOp = selectedOp === 'Todos' || s.operatorId === selectedOp;
+                return matchDate && matchOp;
+            });
+
+            const totalRevenue = filteredSales.reduce((sum, s) => sum + s.total, 0);
+            const salesCount = filteredSales.length;
+            const avgTicket = salesCount > 0 ? totalRevenue / salesCount : 0;
+
+            const activeUser = getActiveUser();
+            const opFilterLabel = selectedOp === 'Todos'
+                ? 'Todos os Operadores'
+                : (state.users.find(u => u.id === selectedOp)?.name || 'Operador');
+
+            const dateFormatted = selectedDate
+                ? selectedDate.split('-').reverse().join('/')
+                : 'Todo o Período';
+
+            const reportTitles = {
+                completo: 'RELATÓRIO GERENCIAL COMPLETO DE CAIXA',
+                fechamento: 'COMPROVANTE DE FECHAMENTO DIÁRIO CONSOLIDADO',
+                operador: 'RELATÓRIO DE DESEMPENHO POR OPERADOR',
+                gaveta: 'EXTRATO DE TURNO E CONFERÊNCIA DE GAVETA'
+            };
+
+            // Drawer / Cash metrics
+            const cashSalesForDate = state.sales
+                .filter(s => (!selectedDate || s.date === selectedDate) && s.paymentMethod === 'Dinheiro')
+                .reduce((acc, s) => acc + s.total, 0);
+
+            const totalReforcos = (state.shift.adjustments || [])
+                .filter(a => a.type === 'reforco')
+                .reduce((acc, a) => acc + a.amount, 0);
+
+            const totalSangrias = (state.shift.adjustments || [])
+                .filter(a => a.type === 'sangria')
+                .reduce((acc, a) => acc + a.amount, 0);
+
+            const initialCash = state.shift.initialCash || 0;
+            const expectedDrawer = initialCash + cashSalesForDate + totalReforcos - totalSangrias;
+            const hasClosedSnapshot = !state.shift.isOpen && typeof state.shift.lastClosedCounted === 'number';
+
+            // Payment Breakdown
+            const methods = ['Dinheiro', 'Pix', 'Cartão de Débito', 'Cartão de Crédito'];
+            const paymentRows = methods.map(m => {
+                const list = filteredSales.filter(s => s.paymentMethod === m);
+                const sum = list.reduce((acc, s) => acc + s.total, 0);
+                const pct = totalRevenue > 0 ? ((sum / totalRevenue) * 100).toFixed(1) : '0.0';
+                return { method: m, count: list.length, total: sum, pct };
+            });
+
+            // Operator Breakdown
+            const operatorRows = state.users.map(u => {
+                const uSales = state.sales.filter(s => (!selectedDate || s.date === selectedDate) && s.operatorId === u.id);
+                const uTotal = uSales.reduce((acc, s) => acc + s.total, 0);
+                const uAvg = uSales.length > 0 ? uTotal / uSales.length : 0;
+                return { name: u.name, role: u.role, count: uSales.length, avg: uAvg, total: uTotal };
+            });
+
+            // Product Ranking
+            const prodMap = {};
+            filteredSales.forEach(s => {
+                s.items.forEach(i => {
+                    if (!prodMap[i.name]) prodMap[i.name] = { qty: 0, total: 0 };
+                    prodMap[i.name].qty += i.qty;
+                    prodMap[i.name].total += i.qty * i.price;
+                });
+            });
+            const productRanking = Object.entries(prodMap).sort((a, b) => b[1].qty - a[1].qty);
+
+            // Critical Stock Items
+            const criticalProducts = state.products.filter(p => p.stock <= p.minStock);
+
+            // Shift History for date
+            const shiftLogs = (state.shift.history || []).filter(h => !selectedDate || h.date === selectedDate);
+
+            const showDrawerSection = ['completo', 'fechamento', 'gaveta'].includes(type);
+            const showPaymentSection = ['completo', 'fechamento'].includes(type);
+            const showOperatorSection = ['completo', 'fechamento', 'operador'].includes(type);
+            const showProductsSection = ['completo', 'fechamento'].includes(type);
+            const showSalesDetailSection = ['completo', 'operador'].includes(type);
+
+            if (format === '80mm') {
+                docEl.innerHTML = `
+                    <div class="text-center border-b border-dashed border-slate-400 pb-2.5 mb-2.5">
+                        <p class="font-bold text-sm uppercase">QUIOSQUE GOURMET</p>
+                        <p class="text-[10px] text-slate-600">Sistema PDV • TECH PEREIRA BH</p>
+                        <p class="font-bold text-[11px] mt-1.5 uppercase">${reportTitles[type]}</p>
+                    </div>
+
+                    <div class="border-b border-dashed border-slate-400 pb-2 mb-2.5 space-y-0.5 text-[10px]">
+                        <div class="flex justify-between"><span>Data Ref.:</span><strong>${dateFormatted}</strong></div>
+                        <div class="flex justify-between"><span>Emissão:</span><span>${getTodayStr().split('-').reverse().join('/')} ${getTimeStr()}</span></div>
+                        <div class="flex justify-between"><span>Filtro Oper.:</span><span>${opFilterLabel}</span></div>
+                        <div class="flex justify-between"><span>Emitido por:</span><span>${activeUser.name}</span></div>
+                        <div class="flex justify-between"><span>Status Caixa:</span><strong>${state.shift.isOpen ? 'ABERTO' : 'FECHADO'}</strong></div>
+                    </div>
+
+                    ${showDrawerSection ? `
+                        <div class="border-b border-dashed border-slate-400 pb-2 mb-2.5">
+                            <p class="font-bold uppercase mb-1">1. FLUXO DE GAVETA (DINHEIRO)</p>
+                            <div class="flex justify-between"><span>(+) Fundo Inicial:</span><span>${formatCurrency(initialCash)}</span></div>
+                            <div class="flex justify-between"><span>(+) Vendas Dinheiro:</span><span>${formatCurrency(cashSalesForDate)}</span></div>
+                            <div class="flex justify-between"><span>(+) Reforços:</span><span>${formatCurrency(totalReforcos)}</span></div>
+                            <div class="flex justify-between"><span>(-) Sangrias:</span><span>-${formatCurrency(totalSangrias)}</span></div>
+                            <div class="flex justify-between font-bold border-t border-slate-300 pt-1 mt-1">
+                                <span>(=) SALDO ESPERADO:</span><span>${formatCurrency(expectedDrawer)}</span>
+                            </div>
+                            ${hasClosedSnapshot ? `
+                                <div class="flex justify-between"><span>Valor Conferido:</span><strong>${formatCurrency(state.shift.lastClosedCounted)}</strong></div>
+                                <div class="flex justify-between"><span>Diferença/Quebra:</span><strong>${formatCurrency(state.shift.lastClosedDiff)}</strong></div>
+                            ` : ''}
+                        </div>
+                    ` : ''}
+
+                    ${showPaymentSection ? `
+                        <div class="border-b border-dashed border-slate-400 pb-2 mb-2.5">
+                            <p class="font-bold uppercase mb-1">2. FORMAS DE PAGAMENTO</p>
+                            ${paymentRows.map(r => `
+                                <div class="flex justify-between">
+                                    <span>${r.method} (${r.count}x):</span>
+                                    <span>${formatCurrency(r.total)}</span>
+                                </div>
+                            `).join('')}
+                            <div class="flex justify-between font-bold text-xs border-t border-slate-300 pt-1 mt-1">
+                                <span>FATURAMENTO TOTAL:</span>
+                                <span>${formatCurrency(totalRevenue)}</span>
+                            </div>
+                            <div class="flex justify-between text-[10px] text-slate-600">
+                                <span>Vendas: ${salesCount} un.</span>
+                                <span>Ticket Médio: ${formatCurrency(avgTicket)}</span>
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    ${showOperatorSection ? `
+                        <div class="border-b border-dashed border-slate-400 pb-2 mb-2.5">
+                            <p class="font-bold uppercase mb-1">3. VENDAS POR OPERADOR</p>
+                            ${operatorRows.map(op => `
+                                <div class="flex justify-between">
+                                    <span>${op.name} (${op.count}):</span>
+                                    <strong>${formatCurrency(op.total)}</strong>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+
+                    ${showProductsSection && productRanking.length > 0 ? `
+                        <div class="border-b border-dashed border-slate-400 pb-2 mb-2.5">
+                            <p class="font-bold uppercase mb-1">4. ITENS VENDIDOS</p>
+                            ${productRanking.map(([name, info]) => `
+                                <div class="flex justify-between gap-1">
+                                    <span class="truncate">${info.qty}x ${name}</span>
+                                    <span class="shrink-0">${formatCurrency(info.total)}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+
+                    <div class="pt-5 text-center space-y-5 text-[10px]">
+                        <div>
+                            <div class="border-t border-slate-700 w-4/5 mx-auto pt-1">Assinatura do Operador</div>
+                        </div>
+                        <div>
+                            <div class="border-t border-slate-700 w-4/5 mx-auto pt-1">Conferência Gerência</div>
+                        </div>
+                        <p class="text-[9px] text-slate-500 pt-1">TECH PEREIRA BH • Documento sem valor fiscal</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // A4 Managerial Report Layout
+            docEl.innerHTML = `
+                <!-- A4 Official Header -->
+                <div class="border-b-2 border-slate-900 pb-4 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="px-2 py-0.5 bg-slate-900 text-white font-bold text-[10px] uppercase tracking-wider rounded">TECH PEREIRA BH</span>
+                            <span class="text-[11px] font-semibold text-slate-500 uppercase">Sistema de Gestão para Quiosque</span>
+                        </div>
+                        <h1 class="text-xl font-extrabold text-slate-900 mt-1">QUIOSQUE GOURMET • ${reportTitles[type]}</h1>
+                        <p class="text-xs text-slate-600 mt-0.5">Período de Referência: <strong>${dateFormatted}</strong> • Filtro Operador: <strong>${opFilterLabel}</strong></p>
+                    </div>
+                    <div class="text-left sm:text-right bg-slate-100 border border-slate-300 rounded-lg px-3.5 py-2.5 text-[11px]">
+                        <p class="text-slate-500">Emitido em: <strong class="text-slate-900">${getTodayStr().split('-').reverse().join('/')} às ${getTimeStr()}</strong></p>
+                        <p class="text-slate-500">Emitido por: <strong class="text-slate-900">${activeUser.name}</strong></p>
+                        <p class="text-slate-500">Status do Turno: <strong class="${state.shift.isOpen ? 'text-emerald-700' : 'text-red-700'}">${state.shift.isOpen ? 'CAIXA ABERTO' : 'CAIXA FECHADO'}</strong></p>
+                    </div>
+                </div>
+
+                <!-- Summary Cards Row -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+                    <div class="border border-slate-300 rounded-lg p-3 bg-slate-50">
+                        <p class="text-[10px] uppercase font-bold text-slate-500">Faturamento Bruto</p>
+                        <p class="text-lg font-extrabold text-slate-900 mt-0.5">${formatCurrency(totalRevenue)}</p>
+                        <p class="text-[10px] text-slate-500">${salesCount} venda(s) no filtro</p>
+                    </div>
+                    <div class="border border-slate-300 rounded-lg p-3 bg-slate-50">
+                        <p class="text-[10px] uppercase font-bold text-slate-500">Ticket Médio</p>
+                        <p class="text-lg font-extrabold text-slate-900 mt-0.5">${formatCurrency(avgTicket)}</p>
+                        <p class="text-[10px] text-slate-500">Média por cliente</p>
+                    </div>
+                    <div class="border border-slate-300 rounded-lg p-3 bg-slate-50">
+                        <p class="text-[10px] uppercase font-bold text-slate-500">Saldo Esperado Gaveta</p>
+                        <p class="text-lg font-extrabold text-slate-900 mt-0.5">${formatCurrency(expectedDrawer)}</p>
+                        <p class="text-[10px] text-slate-500">Espécie física calculada</p>
+                    </div>
+                    <div class="border border-slate-300 rounded-lg p-3 bg-slate-50">
+                        <p class="text-[10px] uppercase font-bold text-slate-500">Itens Comercializados</p>
+                        <p class="text-lg font-extrabold text-slate-900 mt-0.5">${productRanking.reduce((a, b) => a + b[1].qty, 0)} un.</p>
+                        <p class="text-[10px] text-slate-500">${productRanking.length} produto(s) distintos</p>
+                    </div>
+                </div>
+
+                ${showDrawerSection ? `
+                    <!-- Section 1: Cash Register & Drawer Audit -->
+                    <div class="mb-6">
+                        <h2 class="text-xs font-extrabold uppercase tracking-wider text-slate-800 border-b border-slate-300 pb-1.5 mb-2.5">1. Conferência de Turno e Movimentação de Gaveta (Dinheiro)</h2>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <table class="w-full border border-slate-300 text-xs">
+                                <tbody class="divide-y divide-slate-200">
+                                    <tr><td class="py-1.5 px-3 text-slate-600">(+) Fundo de Troco Inicial</td><td class="py-1.5 px-3 text-right font-semibold">${formatCurrency(initialCash)}</td></tr>
+                                    <tr><td class="py-1.5 px-3 text-slate-600">(+) Vendas em Dinheiro (Data)</td><td class="py-1.5 px-3 text-right font-semibold text-emerald-700">${formatCurrency(cashSalesForDate)}</td></tr>
+                                    <tr><td class="py-1.5 px-3 text-slate-600">(+) Reforços / Suprimentos</td><td class="py-1.5 px-3 text-right font-semibold text-blue-700">${formatCurrency(totalReforcos)}</td></tr>
+                                    <tr><td class="py-1.5 px-3 text-slate-600">(-) Sangrias / Retiradas</td><td class="py-1.5 px-3 text-right font-semibold text-red-700">-${formatCurrency(totalSangrias)}</td></tr>
+                                    <tr class="bg-slate-100 font-extrabold"><td class="py-2 px-3 text-slate-900">(=) Saldo Esperado em Gaveta</td><td class="py-2 px-3 text-right text-slate-900">${formatCurrency(expectedDrawer)}</td></tr>
+                                    ${hasClosedSnapshot ? `
+                                        <tr><td class="py-1.5 px-3 text-slate-600">Valor Conferido no Fechamento</td><td class="py-1.5 px-3 text-right font-bold">${formatCurrency(state.shift.lastClosedCounted)}</td></tr>
+                                        <tr class="bg-slate-50 font-bold"><td class="py-1.5 px-3">Diferença / Quebra de Caixa</td><td class="py-1.5 px-3 text-right ${state.shift.lastClosedDiff < 0 ? 'text-red-700' : 'text-emerald-700'}">${formatCurrency(state.shift.lastClosedDiff)}</td></tr>
+                                    ` : ''}
+                                </tbody>
+                            </table>
+
+                            <div class="border border-slate-300 rounded p-3 bg-slate-50/70">
+                                <p class="text-[11px] font-bold text-slate-700 uppercase mb-2">Histórico de Ocorrências de Caixa</p>
+                                ${shiftLogs.length === 0 ? `<p class="text-[11px] text-slate-500">Nenhuma ocorrência registrada nesta data.</p>` : `
+                                    <ul class="space-y-1.5 text-[11px]">
+                                        ${shiftLogs.map(h => `
+                                            <li class="flex justify-between border-b border-slate-200 pb-1">
+                                                <span><strong>${h.time}</strong> - ${h.action} <em class="text-slate-500">(${h.note})</em></span>
+                                                <strong class="shrink-0 ml-2">${formatCurrency(h.amount)}</strong>
+                                            </li>
+                                        `).join('')}
+                                    </ul>
+                                `}
+                            </div>
+                        </div>
+                    </div>
+                ` : ''}
+
+                ${showPaymentSection ? `
+                    <!-- Section 2: Payment Methods -->
+                    <div class="mb-6">
+                        <h2 class="text-xs font-extrabold uppercase tracking-wider text-slate-800 border-b border-slate-300 pb-1.5 mb-2.5">2. Resumo Financeiro por Forma de Pagamento</h2>
+                        <table class="w-full border border-slate-300 text-xs">
+                            <thead>
+                                <tr class="bg-slate-100 border-b border-slate-300 text-left text-[11px] uppercase text-slate-700">
+                                    <th class="py-2 px-3">Forma de Pagamento</th>
+                                    <th class="py-2 px-3 text-center">Qtd. Vendas</th>
+                                    <th class="py-2 px-3 text-right">Participação (%)</th>
+                                    <th class="py-2 px-3 text-right">Valor Total</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-200">
+                                ${paymentRows.map(r => `
+                                    <tr>
+                                        <td class="py-1.5 px-3 font-semibold">${r.method}</td>
+                                        <td class="py-1.5 px-3 text-center">${r.count}</td>
+                                        <td class="py-1.5 px-3 text-right text-slate-600">${r.pct}%</td>
+                                        <td class="py-1.5 px-3 text-right font-bold">${formatCurrency(r.total)}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                            <tfoot>
+                                <tr class="bg-slate-100 border-t-2 border-slate-300 font-extrabold">
+                                    <td class="py-2 px-3">TOTAL CONSOLIDADO</td>
+                                    <td class="py-2 px-3 text-center">${salesCount}</td>
+                                    <td class="py-2 px-3 text-right">100,0%</td>
+                                    <td class="py-2 px-3 text-right">${formatCurrency(totalRevenue)}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                ` : ''}
+
+                ${showOperatorSection ? `
+                    <!-- Section 3: Operator Performance -->
+                    <div class="mb-6">
+                        <h2 class="text-xs font-extrabold uppercase tracking-wider text-slate-800 border-b border-slate-300 pb-1.5 mb-2.5">3. Desempenho Individual por Funcionário / Operador</h2>
+                        <table class="w-full border border-slate-300 text-xs">
+                            <thead>
+                                <tr class="bg-slate-100 border-b border-slate-300 text-left text-[11px] uppercase text-slate-700">
+                                    <th class="py-2 px-3">Operador</th>
+                                    <th class="py-2 px-3">Função</th>
+                                    <th class="py-2 px-3 text-center">Vendas Realizadas</th>
+                                    <th class="py-2 px-3 text-right">Ticket Médio</th>
+                                    <th class="py-2 px-3 text-right">Faturamento</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-200">
+                                ${operatorRows.map(op => `
+                                    <tr>
+                                        <td class="py-1.5 px-3 font-semibold">${op.name}</td>
+                                        <td class="py-1.5 px-3 text-slate-600">${op.role}</td>
+                                        <td class="py-1.5 px-3 text-center">${op.count}</td>
+                                        <td class="py-1.5 px-3 text-right text-slate-600">${formatCurrency(op.avg)}</td>
+                                        <td class="py-1.5 px-3 text-right font-bold">${formatCurrency(op.total)}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                ` : ''}
+
+                ${showProductsSection ? `
+                    <!-- Section 4: Products Sold & Critical Stock Alert -->
+                    <div class="grid grid-cols-1 sm:grid-cols-12 gap-4 mb-6">
+                        <div class="${criticalProducts.length > 0 ? 'sm:col-span-7' : 'sm:col-span-12'}">
+                            <h2 class="text-xs font-extrabold uppercase tracking-wider text-slate-800 border-b border-slate-300 pb-1.5 mb-2.5">4. Ranking de Produtos Comercializados</h2>
+                            ${productRanking.length === 0 ? `<p class="text-xs text-slate-500">Nenhum produto vendido neste filtro.</p>` : `
+                                <table class="w-full border border-slate-300 text-xs">
+                                    <thead>
+                                        <tr class="bg-slate-100 border-b border-slate-300 text-left text-[10px] uppercase text-slate-700">
+                                            <th class="py-1.5 px-2.5">Produto</th>
+                                            <th class="py-1.5 px-2.5 text-center">Qtd.</th>
+                                            <th class="py-1.5 px-2.5 text-right">Subtotal</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-200">
+                                        ${productRanking.map(([name, info]) => `
+                                            <tr>
+                                                <td class="py-1.5 px-2.5 font-medium">${name}</td>
+                                                <td class="py-1.5 px-2.5 text-center font-bold">${info.qty}</td>
+                                                <td class="py-1.5 px-2.5 text-right font-semibold">${formatCurrency(info.total)}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            `}
+                        </div>
+
+                        ${criticalProducts.length > 0 ? `
+                            <div class="sm:col-span-5">
+                                <h2 class="text-xs font-extrabold uppercase tracking-wider text-red-800 border-b border-red-300 pb-1.5 mb-2.5">Alerta de Reposição (Estoque Crítico)</h2>
+                                <div class="border border-red-300 bg-red-50/60 rounded p-2.5 space-y-1.5 text-[11px]">
+                                    ${criticalProducts.map(p => `
+                                        <div class="flex justify-between items-center border-b border-red-200/70 pb-1 last:border-b-0 last:pb-0">
+                                            <span class="font-semibold text-slate-800">${p.name}</span>
+                                            <span class="px-1.5 py-0.5 rounded bg-red-600 text-white font-bold text-[10px]">${p.stock <= 0 ? 'ESGOTADO' : `Restam ${p.stock}`}</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                ` : ''}
+
+                ${showSalesDetailSection ? `
+                    <!-- Section 5: Detailed Sales Log -->
+                    <div class="mb-8">
+                        <h2 class="text-xs font-extrabold uppercase tracking-wider text-slate-800 border-b border-slate-300 pb-1.5 mb-2.5">5. Detalhamento das Vendas Registradas</h2>
+                        ${filteredSales.length === 0 ? `<p class="text-xs text-slate-500">Nenhuma venda registrada para o filtro selecionado.</p>` : `
+                            <table class="w-full border border-slate-300 text-[11px]">
+                                <thead>
+                                    <tr class="bg-slate-100 border-b border-slate-300 text-left text-[10px] uppercase text-slate-700">
+                                        <th class="py-1.5 px-2.5">ID / Hora</th>
+                                        <th class="py-1.5 px-2.5">Operador</th>
+                                        <th class="py-1.5 px-2.5">Itens</th>
+                                        <th class="py-1.5 px-2.5">Pagamento</th>
+                                        <th class="py-1.5 px-2.5 text-right">Valor</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-200">
+                                    ${filteredSales.map(s => `
+                                        <tr>
+                                            <td class="py-1.5 px-2.5 font-bold whitespace-nowrap">${s.id} (${s.time})</td>
+                                            <td class="py-1.5 px-2.5">${s.operatorName}</td>
+                                            <td class="py-1.5 px-2.5 text-slate-600">${s.items.map(i => `${i.qty}x ${i.name}`).join(', ')}</td>
+                                            <td class="py-1.5 px-2.5">${s.paymentMethod}</td>
+                                            <td class="py-1.5 px-2.5 text-right font-bold">${formatCurrency(s.total)}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        `}
+                    </div>
+                ` : ''}
+
+                <!-- Signatures Footer -->
+                <div class="pt-8 mt-6 border-t border-slate-300 grid grid-cols-2 gap-10 text-center text-xs">
+                    <div>
+                        <div class="border-t border-slate-800 pt-1.5 font-semibold text-slate-800">Assinatura do Operador de Caixa</div>
+                        <p class="text-[10px] text-slate-500">${activeUser.name}</p>
+                    </div>
+                    <div>
+                        <div class="border-t border-slate-800 pt-1.5 font-semibold text-slate-800">Assinatura do Responsável / Gerência</div>
+                        <p class="text-[10px] text-slate-500">Conferência Administrativa</p>
+                    </div>
+                </div>
+                <p class="text-center text-[10px] text-slate-400 mt-6">Documento gerado pelo Sistema Web de Gestão para Quiosque • TECH PEREIRA BH</p>
+            `;
+        }
+
+        // ==================== STOCK & PRODUCT MANAGEMENT ====================
+        function renderStockTable() {
+            const tbody = document.getElementById('stock-table-body');
+            const searchInput = document.getElementById('stock-search');
+            const search = searchInput ? searchInput.value.toLowerCase() : '';
+
+            const totalProd = state.products.length;
+            const lowProd = state.products.filter(p => p.stock > 0 && p.stock <= p.minStock).length;
+            const outProd = state.products.filter(p => p.stock <= 0).length;
+
+            document.getElementById('stat-total-products').textContent = totalProd;
+            document.getElementById('stat-low-stock').textContent = lowProd;
+            document.getElementById('stat-out-stock').textContent = outProd;
+
+            const filtered = state.products.filter(p =>
+                p.name.toLowerCase().includes(search) || p.category.toLowerCase().includes(search)
+            );
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-slate-500 text-xs">Nenhum produto encontrado.</td></tr>`;
+            } else {
+                tbody.innerHTML = filtered.map(p => {
+                    let statusHtml = `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">Normal</span>`;
+                    if (p.stock <= 0) {
+                        statusHtml = `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-red-500/20 text-red-400 border border-red-500/40">Esgotado</span>`;
+                    } else if (p.stock <= p.minStock) {
+                        statusHtml = `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/40 animate-pulse">Crítico (≤ ${p.minStock})</span>`;
+                    }
+
+                    return `
+                        <tr class="hover:bg-slate-800/40 transition-colors">
+                            <td class="py-3 px-4 font-semibold text-slate-100">
+                                <div class="flex items-center gap-2.5">
+                                    <span class="w-8 h-8 rounded-lg bg-slate-800 text-amber-400 flex items-center justify-center text-xs"><i class="fa-solid ${p.icon || 'fa-utensils'}"></i></span>
+                                    <span>${p.name}</span>
+                                </div>
+                            </td>
+                            <td class="py-3 px-4 text-xs text-slate-400">${p.category}</td>
+                            <td class="py-3 px-4 font-bold text-emerald-400">${formatCurrency(p.price)}</td>
+                            <td class="py-3 px-4 font-extrabold text-white">${p.stock} un.</td>
+                            <td class="py-3 px-4">${statusHtml}</td>
+                            <td class="py-3 px-4 text-right">
+                                <div class="inline-flex items-center gap-1.5">
+                                    <button onclick="quickRestock('${p.id}', 10)" title="Repor +10 unidades" class="px-2.5 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500 text-emerald-400 hover:text-slate-950 font-bold text-xs transition-all">
+                                        +10 un.
+                                    </button>
+                                    <button onclick="openProductModal('${p.id}')" title="Editar produto" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs transition-colors">
+                                        <i class="fa-solid fa-pen"></i>
+                                    </button>
+                                    <button onclick="deleteProduct('${p.id}')" title="Excluir produto" class="p-2 rounded-lg bg-slate-800 hover:bg-red-500/20 text-slate-400 hover:text-red-400 text-xs transition-colors">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            // Render Recent Stock Movements
+            const movList = document.getElementById('stock-movements-list');
+            if (!state.stockMovements || state.stockMovements.length === 0) {
+                movList.innerHTML = `<p class="text-slate-500">Nenhuma movimentação manual registrada.</p>`;
+            } else {
+                movList.innerHTML = state.stockMovements.slice(0, 12).map(m => `
+                    <div class="flex items-center justify-between bg-slate-950/70 border border-slate-800/80 rounded-xl px-3.5 py-2">
+                        <div class="flex items-center gap-2.5">
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${m.type === 'Entrada' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-red-500/15 text-red-400'}">${m.type} (+${m.qty})</span>
+                            <span class="font-semibold text-slate-200">${m.product}</span>
+                        </div>
+                        <span class="text-slate-400 text-[11px]">${m.date.split('-').reverse().join('/')} ${m.time} • ${m.operator}</span>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function quickRestock(productId, qty) {
+            const product = state.products.find(p => p.id === productId);
+            if (!product) return;
+
+            const user = getActiveUser();
+            product.stock += qty;
+            state.stockMovements.unshift({
+                date: getTodayStr(),
+                time: getTimeStr(),
+                product: product.name,
+                type: 'Entrada',
+                qty: qty,
+                operator: user.name
+            });
+
+            saveState();
+            refreshAllUI();
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: `+${qty} un. adicionadas em ${product.name}`,
+                showConfirmButton: false,
+                timer: 1800
+            });
+        }
+
+        function openProductModal(productId = null) {
+            const titleEl = document.getElementById('product-modal-title');
+            const idEl = document.getElementById('prod-id');
+            const nameEl = document.getElementById('prod-name');
+            const catEl = document.getElementById('prod-category');
+            const priceEl = document.getElementById('prod-price');
+            const stockEl = document.getElementById('prod-stock');
+            const minStockEl = document.getElementById('prod-min-stock');
+
+            if (productId) {
+                const prod = state.products.find(p => p.id === productId);
+                if (!prod) return;
+                titleEl.textContent = 'Editar Produto';
+                idEl.value = prod.id;
+                nameEl.value = prod.name;
+                catEl.value = prod.category;
+                priceEl.value = prod.price.toFixed(2);
+                stockEl.value = prod.stock;
+                minStockEl.value = prod.minStock;
+            } else {
+                titleEl.textContent = 'Cadastrar Novo Produto';
+                idEl.value = '';
+                nameEl.value = '';
+                catEl.value = 'Salgados';
+                priceEl.value = '';
+                stockEl.value = '20';
+                minStockEl.value = '5';
+            }
+
+            openModal('product-modal');
+        }
+
+        function saveProduct(event) {
+            event.preventDefault();
+            const id = document.getElementById('prod-id').value;
+            const name = document.getElementById('prod-name').value.trim();
+            const category = document.getElementById('prod-category').value;
+            const price = parseFloat(document.getElementById('prod-price').value) || 0;
+            const stock = parseInt(document.getElementById('prod-stock').value) || 0;
+            const minStock = parseInt(document.getElementById('prod-min-stock').value) || 5;
+
+            const categoryIcons = {
+                'Salgados': 'fa-drumstick-bite',
+                'Cafés': 'fa-mug-hot',
+                'Refrigerantes': 'fa-bottle-droplet',
+                'Sucos & Água': 'fa-glass-water',
+                'Lanches': 'fa-burger'
+            };
+
+            const user = getActiveUser();
+
+            if (id) {
+                const prod = state.products.find(p => p.id === id);
+                if (prod) {
+                    const diff = stock - prod.stock;
+                    prod.name = name;
+                    prod.category = category;
+                    prod.price = price;
+                    prod.stock = stock;
+                    prod.minStock = minStock;
+                    prod.icon = categoryIcons[category] || 'fa-utensils';
+
+                    if (diff > 0) {
+                        state.stockMovements.unshift({
+                            date: getTodayStr(),
+                            time: getTimeStr(),
+                            product: name,
+                            type: 'Entrada',
+                            qty: diff,
+                            operator: user.name
+                        });
+                    }
+                }
+            } else {
+                const newProd = {
+                    id: 'p-' + Date.now(),
+                    name,
+                    category,
+                    price,
+                    stock,
+                    minStock,
+                    icon: categoryIcons[category] || 'fa-utensils'
+                };
+                state.products.push(newProd);
+                if (stock > 0) {
+                    state.stockMovements.unshift({
+                        date: getTodayStr(),
+                        time: getTimeStr(),
+                        product: name,
+                        type: 'Entrada',
+                        qty: stock,
+                        operator: user.name
+                    });
+                }
+            }
+
+            saveState();
+            closeModal('product-modal');
+            refreshAllUI();
+            Swal.fire({ icon: 'success', title: 'Produto Salvo!', timer: 1500, showConfirmButton: false });
+        }
+
+        function deleteProduct(productId) {
+            const prod = state.products.find(p => p.id === productId);
+            if (!prod) return;
+
+            Swal.fire({
+                title: 'Excluir produto?',
+                text: `Deseja remover "${prod.name}" do catálogo?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#475569',
+                confirmButtonText: 'Sim, excluir',
+                cancelButtonText: 'Cancelar'
+            }).then((res) => {
+                if (res.isConfirmed) {
+                    state.products = state.products.filter(p => p.id !== productId);
+                    saveState();
+                    refreshAllUI();
+                    Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Produto removido!', showConfirmButton: false, timer: 1500 });
+                }
+            });
+        }
+
+        // ==================== REPORTS & ANALYTICS ====================
+        function renderReports() {
+            const dateInput = document.getElementById('report-date-filter');
+            const opSelect = document.getElementById('report-operator-filter');
+
+            if (!dateInput.value) {
+                dateInput.value = getTodayStr();
+            }
+
+            const currentOpVal = opSelect.value || 'Todos';
+            opSelect.innerHTML = `<option value="Todos">Todos os Operadores</option>` +
+                state.users.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
+            opSelect.value = currentOpVal;
+
+            const selectedDate = dateInput.value;
+            const selectedOp = opSelect.value;
+
+            const filteredSales = state.sales.filter(s => {
+                const matchDate = !selectedDate || s.date === selectedDate;
+                const matchOp = selectedOp === 'Todos' || s.operatorId === selectedOp;
+                return matchDate && matchOp;
+            });
+
+            // KPIs
+            const revenue = filteredSales.reduce((acc, s) => acc + s.total, 0);
+            const salesCount = filteredSales.length;
+            const avgTicket = salesCount > 0 ? revenue / salesCount : 0;
+            const drawerMetrics = getDrawerMetrics();
+
+            let totalItemsSold = 0;
+            const productCountMap = {};
+            filteredSales.forEach(s => {
+                s.items.forEach(i => {
+                    totalItemsSold += i.qty;
+                    productCountMap[i.name] = (productCountMap[i.name] || 0) + i.qty;
+                });
+            });
+
+            const sortedProds = Object.entries(productCountMap).sort((a, b) => b[1] - a[1]);
+            const topProdText = sortedProds.length > 0 ? `${sortedProds[0][0]} (${sortedProds[0][1]}x)` : '-';
+
+            document.getElementById('kpi-revenue').textContent = formatCurrency(revenue);
+            document.getElementById('kpi-sales-count').textContent = `${salesCount} ${salesCount === 1 ? 'venda realizada' : 'vendas realizadas'}`;
+            document.getElementById('kpi-drawer-cash').textContent = formatCurrency(drawerMetrics.expectedCash);
+            document.getElementById('kpi-drawer-detail').textContent = `Inicial ${formatCurrency(state.shift.initialCash || 0)} + Dinheiro ${formatCurrency(drawerMetrics.todayCashSales)}`;
+            document.getElementById('kpi-avg-ticket').textContent = formatCurrency(avgTicket);
+            document.getElementById('kpi-items-sold').textContent = `${totalItemsSold} un.`;
+            document.getElementById('kpi-top-product').textContent = `Mais vendido: ${topProdText}`;
+
+            // Payment Breakdown & Chart
+            const methods = [
+                { name: 'Dinheiro', color: '#10b981', icon: 'fa-money-bill-wave' },
+                { name: 'Pix', color: '#3b82f6', icon: 'fa-brands fa-pix' },
+                { name: 'Cartão de Débito', color: '#f59e0b', icon: 'fa-credit-card' },
+                { name: 'Cartão de Crédito', color: '#a855f7', icon: 'fa-regular fa-credit-card' }
+            ];
+
+            const methodTotals = methods.map(m => {
+                const sum = filteredSales.filter(s => s.paymentMethod === m.name).reduce((acc, s) => acc + s.total, 0);
+                return { ...m, total: sum };
+            });
+
+            document.getElementById('payment-breakdown-list').innerHTML = methodTotals.map(m => `
+                <div class="flex items-center justify-between">
+                    <span class="flex items-center gap-2 text-slate-300">
+                        <span class="w-2.5 h-2.5 rounded-full" style="background:${m.color}"></span>
+                        ${m.name}
+                    </span>
+                    <strong class="text-white">${formatCurrency(m.total)}</strong>
+                </div>
+            `).join('');
+
+            const ctx = document.getElementById('paymentChart');
+            if (ctx && typeof Chart !== 'undefined') {
+                if (state.paymentChartInstance) {
+                    state.paymentChartInstance.destroy();
+                }
+                const hasData = methodTotals.some(m => m.total > 0);
+                state.paymentChartInstance = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: methodTotals.map(m => m.name),
+                        datasets: [{
+                            data: hasData ? methodTotals.map(m => m.total) : [1],
+                            backgroundColor: hasData ? methodTotals.map(m => m.color) : ['#1e293b'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '68%',
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                enabled: hasData,
+                                callbacks: {
+                                    label: (context) => ` ${context.label}: ${formatCurrency(context.parsed)}`
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Operator Performance Table
+            const opBody = document.getElementById('operator-performance-body');
+            opBody.innerHTML = state.users.map(u => {
+                const uSales = state.sales.filter(s => (!selectedDate || s.date === selectedDate) && s.operatorId === u.id);
+                const uTotal = uSales.reduce((acc, s) => acc + s.total, 0);
+                return `
+                    <tr class="hover:bg-slate-800/40">
+                        <td class="py-2.5 px-3 font-bold text-slate-100">${u.name}</td>
+                        <td class="py-2.5 px-3 text-slate-400">${u.role}</td>
+                        <td class="py-2.5 px-3 text-slate-300">${uSales.length} venda(s)</td>
+                        <td class="py-2.5 px-3 text-right font-extrabold text-emerald-400">${formatCurrency(uTotal)}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            // Shift History List
+            const shiftHistEl = document.getElementById('shift-history-list');
+            const shiftLogs = (state.shift.history || []).filter(h => !selectedDate || h.date === selectedDate);
+            if (shiftLogs.length === 0) {
+                shiftHistEl.innerHTML = `<p class="text-slate-500">Sem registros de turno nesta data.</p>`;
+            } else {
+                shiftHistEl.innerHTML = shiftLogs.map(h => `
+                    <div class="bg-slate-950/70 border border-slate-800 rounded-xl px-3 py-2 flex items-center justify-between gap-2">
+                        <div>
+                            <span class="font-bold text-amber-400">${h.time}</span> • <strong class="text-slate-200">${h.action}</strong>
+                            <p class="text-[11px] text-slate-400">${h.operator} — ${h.note}</p>
+                        </div>
+                        <span class="font-extrabold text-white shrink-0">${formatCurrency(h.amount)}</span>
+                    </div>
+                `).join('');
+            }
+
+            // Sales History Table
+            const salesBody = document.getElementById('sales-history-body');
+            document.getElementById('sales-history-badge').textContent = `${filteredSales.length} venda(s) encontrada(s)`;
+
+            if (filteredSales.length === 0) {
+                salesBody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-500">Nenhuma venda registrada para o filtro selecionado.</td></tr>`;
+            } else {
+                salesBody.innerHTML = filteredSales.map(s => {
+                    const itemsSummary = s.items.map(i => `${i.qty}x ${i.name}`).join(', ');
+                    const cashDetail = s.paymentMethod === 'Dinheiro'
+                        ? `Rec: ${formatCurrency(s.received)} | Troco: <span class="text-amber-400 font-semibold">${formatCurrency(s.change)}</span>`
+                        : `<span class="text-slate-500">Valor exato</span>`;
+
+                    return `
+                        <tr class="hover:bg-slate-800/40 transition-colors">
+                            <td class="py-3 px-4 font-bold text-white whitespace-nowrap">${s.id} <span class="text-slate-400 font-normal">(${s.time})</span></td>
+                            <td class="py-3 px-4 text-slate-200">${s.operatorName}</td>
+                            <td class="py-3 px-4 text-slate-400 max-w-xs truncate" title="${itemsSummary}">${itemsSummary}</td>
+                            <td class="py-3 px-4"><span class="px-2 py-0.5 rounded-lg bg-slate-800 text-slate-200 font-semibold">${s.paymentMethod}</span></td>
+                            <td class="py-3 px-4 text-slate-300 whitespace-nowrap">${cashDetail}</td>
+                            <td class="py-3 px-4 text-right font-extrabold text-emerald-400 whitespace-nowrap">${formatCurrency(s.total)}</td>
+                            <td class="py-3 px-4 text-center">
+                                <button onclick="viewSaleReceipt('${s.id}')" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-amber-500 hover:text-slate-950 text-slate-300 font-semibold transition-colors">
+                                    <i class="fa-solid fa-receipt"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+        }
+
+        function viewSaleReceipt(saleId) {
+            const sale = state.sales.find(s => s.id === saleId);
+            if (!sale) return;
+
+            Swal.fire({
+                title: `Comprovante ${sale.id}`,
+                html: `
+                    <div class="text-left bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs space-y-2">
+                        <div class="flex justify-between text-slate-400"><span>Data/Hora:</span><span>${sale.date.split('-').reverse().join('/')} às ${sale.time}</span></div>
+                        <div class="flex justify-between text-slate-400"><span>Operador:</span><strong class="text-white">${sale.operatorName}</strong></div>
+                        <div class="border-t border-slate-800 pt-2 space-y-1">
+                            ${sale.items.map(i => `
+                                <div class="flex justify-between">
+                                    <span>${i.qty}x ${i.name}</span>
+                                    <span>${formatCurrency(i.qty * i.price)}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="border-t border-slate-800 pt-2 flex justify-between font-bold text-sm text-emerald-400">
+                            <span>Total Pago (${sale.paymentMethod}):</span>
+                            <span>${formatCurrency(sale.total)}</span>
+                        </div>
+                        ${sale.paymentMethod === 'Dinheiro' ? `
+                            <div class="flex justify-between text-slate-400"><span>Recebido / Troco:</span><span>${formatCurrency(sale.received)} / ${formatCurrency(sale.change)}</span></div>
+                        ` : ''}
+                    </div>
+                `,
+                confirmButtonColor: '#f59e0b',
+                confirmButtonText: 'Fechar'
+            });
+        }
+
+        // ==================== USERS & OPERATOR SWITCHING ====================
+        function renderUsersGrid() {
+            const grid = document.getElementById('users-grid');
+            grid.innerHTML = state.users.map(u => {
+                const isActive = u.id === state.activeUserId;
+                const uSalesCount = state.sales.filter(s => s.operatorId === u.id).length;
+                const uRevenue = state.sales.filter(s => s.operatorId === u.id).reduce((acc, s) => acc + s.total, 0);
+
+                return `
+                    <div class="bg-slate-900 border ${isActive ? 'border-amber-500/60 ring-1 ring-amber-500/20' : 'border-slate-800'} rounded-2xl p-5 flex flex-col justify-between gap-4">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-11 h-11 rounded-xl ${isActive ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-amber-400'} font-extrabold text-sm flex items-center justify-center">
+                                    ${u.name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()}
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-sm text-white">${u.name}</h3>
+                                    <span class="text-[11px] px-2 py-0.5 rounded-full ${u.role === 'Administrador' ? 'bg-purple-500/15 text-purple-300' : 'bg-blue-500/15 text-blue-300'} font-semibold">${u.role}</span>
+                                </div>
+                            </div>
+                            ${isActive ? `<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">Em Operação</span>` : ''}
+                        </div>
+
+                        <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-3 grid grid-cols-2 gap-2 text-xs">
+                            <div>
+                                <span class="text-slate-400 block text-[11px]">Vendas Totais</span>
+                                <strong class="text-white">${uSalesCount} pedidos</strong>
+                            </div>
+                            <div>
+                                <span class="text-slate-400 block text-[11px]">Faturado</span>
+                                <strong class="text-emerald-400">${formatCurrency(uRevenue)}</strong>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <button onclick="switchActiveOperator('${u.id}')" ${isActive ? 'disabled' : ''} class="flex-1 py-2 rounded-xl ${isActive ? 'bg-slate-800 text-slate-500 cursor-default' : 'bg-amber-500 hover:bg-amber-600 text-slate-950'} font-bold text-xs transition-all">
+                                ${isActive ? 'Operador Ativo no Caixa' : 'Assumir Caixa'}
+                            </button>
+                            ${u.id !== 'u1' ? `
+                                <button onclick="deleteUser('${u.id}')" title="Remover funcionário" class="p-2 rounded-xl bg-slate-800 hover:bg-red-500/20 text-slate-400 hover:text-red-400 text-xs transition-colors">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function openLoginModal() {
+            const list = document.getElementById('login-users-list');
+            list.innerHTML = state.users.map(u => {
+                const isCurrent = u.id === state.activeUserId;
+                return `
+                    <button onclick="switchActiveOperator('${u.id}', true)" class="w-full p-3.5 rounded-xl border ${isCurrent ? 'border-amber-500 bg-amber-500/10' : 'border-slate-800 bg-slate-950 hover:border-slate-700'} flex items-center justify-between text-left transition-all">
+                        <div>
+                            <p class="font-bold text-sm text-white">${u.name}</p>
+                            <p class="text-xs text-slate-400">${u.role}</p>
+                        </div>
+                        ${isCurrent
+                            ? `<span class="text-xs font-bold text-amber-400"><i class="fa-solid fa-circle-check mr-1"></i>Ativo</span>`
+                            : `<span class="text-xs font-semibold text-slate-400 hover:text-white">Selecionar <i class="fa-solid fa-arrow-right ml-1"></i></span>`
+                        }
+                    </button>
+                `;
+            }).join('');
+            openModal('login-modal');
+        }
+
+        function switchActiveOperator(userId, fromModal = false) {
+            state.activeUserId = userId;
+            saveState();
+            if (fromModal) closeModal('login-modal');
+            refreshAllUI();
+            const user = getActiveUser();
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'info',
+                title: `Operador ativo: ${user.name}`,
+                showConfirmButton: false,
+                timer: 1800
+            });
+        }
+
+        function openAddUserModal() {
+            Swal.fire({
+                title: 'Cadastrar Novo Funcionário',
+                html: `
+                    <div class="space-y-3 text-left">
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1">Nome Completo</label>
+                            <input type="text" id="swal-user-name" class="swal2-input !m-0 !w-full" placeholder="Ex: Carlos Eduardo">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1">Perfil de Acesso</label>
+                            <select id="swal-user-role" class="swal2-select !m-0 !w-full">
+                                <option value="Operador de Caixa">Operador de Caixa</option>
+                                <option value="Administrador">Administrador</option>
+                            </select>
+                        </div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonColor: '#f59e0b',
+                cancelButtonColor: '#475569',
+                confirmButtonText: 'Cadastrar',
+                cancelButtonText: 'Cancelar',
+                preConfirm: () => {
+                    const name = document.getElementById('swal-user-name').value.trim();
+                    const role = document.getElementById('swal-user-role').value;
+                    if (!name) {
+                        Swal.showValidationMessage('Informe o nome do funcionário.');
+                        return false;
+                    }
+                    return { name, role };
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    state.users.push({
+                        id: 'u-' + Date.now(),
+                        name: result.value.name,
+                        role: result.value.role,
+                        pin: '0000',
+                        active: true
+                    });
+                    saveState();
+                    refreshAllUI();
+                    Swal.fire({ icon: 'success', title: 'Funcionário Cadastrado!', timer: 1500, showConfirmButton: false });
+                }
+            });
+        }
+
+        function deleteUser(userId) {
+            if (userId === state.activeUserId) {
+                Swal.fire({ icon: 'warning', title: 'Operador em uso', text: 'Troque o operador ativo antes de excluir este usuário.' });
+                return;
+            }
+            state.users = state.users.filter(u => u.id !== userId);
+            saveState();
+            refreshAllUI();
+        }
+
+        // ==================== MODAL HELPERS ====================
+        function openModal(id) {
+            const el = document.getElementById(id);
+            el.classList.remove('hidden');
+            el.classList.add('flex');
+        }
+
+        function closeModal(id) {
+            const el = document.getElementById(id);
+            el.classList.add('hidden');
+            el.classList.remove('flex');
+        }
+
+        // ==================== INITIALIZATION ====================
+        function refreshAllUI() {
+            updateHeaderStatus();
+            renderPDVProducts();
+            renderCart();
+            renderStockTable();
+            renderReports();
+            renderUsersGrid();
+        }
+
+        window.onload = function () {
+            loadState();
+            refreshAllUI();
+        };
+    </script>
+</body>
+</html>
