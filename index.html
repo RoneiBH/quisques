@@ -99,14 +99,32 @@
             0%, 100% {
                 border-color: rgba(245, 158, 11, 0.85);
                 box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.35), inset 0 0 18px rgba(245, 158, 11, 0.08);
-            }
-            50% {
-                border-color: rgba(239, 68, 68, 0.95);
-                box-shadow: 0 0 16px 2px rgba(239, 68, 68, 0.35), inset 0 0 24px rgba(239, 68, 68, 0.14);
-            }
+        /* Modern Receipt Zig-Zag Edge (Thermal Paper Cream) */
+        .receipt-zigzag-top {
+            background: linear-gradient(-45deg, #fefce8 8px, transparent 0), linear-gradient(45deg, #fefce8 8px, transparent 0);
+            background-position: left top;
+            background-repeat: repeat-x;
+            background-size: 16px 16px;
+            height: 12px;
+            width: 100%;
         }
-        .critical-stock-card {
-            animation: critical-glow 1.8s ease-in-out infinite;
+        .receipt-zigzag-bottom {
+            background: linear-gradient(-135deg, #fef9c3 8px, transparent 0), linear-gradient(135deg, #fef9c3 8px, transparent 0);
+            background-position: left bottom;
+            background-repeat: repeat-x;
+            background-size: 16px 16px;
+            height: 12px;
+            width: 100%;
+        }
+        .swal2-receipt-popup {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+        }
+        .swal2-receipt-popup .swal2-html-container {
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: visible !important;
         }
 
         /* Print Media Styles for Clean PDF / Thermal Receipt Output */
@@ -206,6 +224,12 @@
 
             <!-- Operator & Cash Shift Status -->
             <div class="flex items-center gap-2 sm:gap-3 order-2 lg:order-3">
+                <!-- Quick Sangria Button for Operator (Visible on PDV) -->
+                <button onclick="openQuickSangriaModal()" id="header-sangria-btn" class="flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-bold transition-all bg-orange-500/10 border-orange-500/30 text-orange-400 hover:bg-orange-500 hover:text-slate-950">
+                    <i class="fa-solid fa-hand-holding-dollar"></i>
+                    <span>Sangria</span>
+                </button>
+
                 <!-- Shift Status Button -->
                 <button onclick="openShiftControlModal()" id="shift-status-btn" class="flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-semibold transition-all bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20">
                     <span class="relative flex h-2.5 w-2.5">
@@ -254,51 +278,36 @@
                     </button>
                 </div>
 
-                <!-- Search & Category Filter Bar -->
-                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col gap-3">
-                    <div class="relative">
-                        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
-                        <input type="text" id="pdv-search" oninput="renderPDVProducts()" placeholder="Buscar salgado, café, bebida ou código..." class="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none transition-all">
-                    </div>
-
-                    <!-- Category Pills -->
-                    <div class="flex items-center gap-2 overflow-x-auto pb-1" id="category-pills">
-                        <button onclick="setCategory('Todos')" class="cat-pill active px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-amber-500 text-slate-950 whitespace-nowrap transition-all">
-                            Todos
-                        </button>
-                        <button onclick="setCategory('Salgados')" class="cat-pill px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition-all">
-                            <i class="fa-solid fa-drumstick-bite mr-1"></i> Salgados
-                        </button>
-                        <button onclick="setCategory('Cafés')" class="cat-pill px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition-all">
-                            <i class="fa-solid fa-mug-hot mr-1"></i> Cafés
-                        </button>
-                        <button onclick="setCategory('Refrigerantes')" class="cat-pill px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition-all">
-                            <i class="fa-solid fa-bottle-droplet mr-1"></i> Refrigerantes
-                        </button>
-                        <button onclick="setCategory('Sucos & Água')" class="cat-pill px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition-all">
-                            <i class="fa-solid fa-glass-water mr-1"></i> Sucos & Água
-                        </button>
-                        <button onclick="setCategory('Lanches')" class="cat-pill px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition-all">
-                            <i class="fa-solid fa-burger mr-1"></i> Lanches
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Critical Stock Alert Banner in PDV -->
-                <div id="pdv-critical-banner" class="hidden bg-gradient-to-r from-amber-500/15 via-red-500/15 to-amber-500/15 border border-amber-500/40 rounded-2xl px-4 py-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
+                <!-- Critical Stock Top Alert Banner -->
+                <div id="pdv-critical-banner" class="hidden bg-amber-500/10 border border-amber-500/40 rounded-2xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                     <div class="flex items-center gap-2.5">
-                        <span class="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-sm shrink-0 animate-pulse">
+                        <div class="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-base shrink-0 animate-pulse">
                             <i class="fa-solid fa-triangle-exclamation"></i>
-                        </span>
+                        </div>
                         <div>
-                            <p id="pdv-critical-title" class="text-xs font-bold text-amber-300">Atenção: Itens com estoque crítico!</p>
-                            <p id="pdv-critical-subtitle" class="text-[11px] text-slate-300">Clique em "+ Repor" no card ou filtre abaixo para reabastecer.</p>
+                            <h3 id="pdv-critical-title" class="font-bold text-xs sm:text-sm text-amber-300">Alerta de Estoque Crítico</h3>
+                            <p id="pdv-critical-subtitle" class="text-[11px] text-amber-200/80">Alguns produtos precisam de reposição.</p>
                         </div>
                     </div>
-                    <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
-                        <button onclick="toggleCriticalFilter()" id="btn-filter-critical" class="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-[11px] transition-all whitespace-nowrap">
-                            Ver Apenas Críticos
-                        </button>
+                    <button onclick="toggleCriticalFilter()" id="btn-filter-critical" class="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-[11px] transition-all whitespace-nowrap">
+                        Ver Apenas Críticos
+                    </button>
+                </div>
+
+                <!-- Search & Categories Bar -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 space-y-3">
+                    <div class="relative">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input type="text" id="pdv-search" oninput="renderPDVProducts()" placeholder="Buscar salgado, café, bebida ou lanche..." class="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl pl-9 pr-4 py-2.5 text-xs sm:text-sm text-white outline-none transition-colors">
+                    </div>
+
+                    <div class="flex items-center gap-1.5 overflow-x-auto pb-1">
+                        <button onclick="setCategory('Todos')" class="cat-pill active px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-amber-500 text-slate-950 whitespace-nowrap transition-all">Todos</button>
+                        <button onclick="setCategory('Salgados')" class="cat-pill px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition-all">Salgados</button>
+                        <button onclick="setCategory('Cafés')" class="cat-pill px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition-all">Cafés</button>
+                        <button onclick="setCategory('Refrigerantes')" class="cat-pill px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition-all">Refrigerantes</button>
+                        <button onclick="setCategory('Sucos & Água')" class="cat-pill px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition-all">Sucos & Água</button>
+                        <button onclick="setCategory('Lanches')" class="cat-pill px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition-all">Lanches</button>
                     </div>
                 </div>
 
@@ -308,39 +317,108 @@
                 </div>
             </div>
 
-            <!-- Right Column: Current Order / Comanda (5 cols on lg, 4 on xl) -->
-            <div class="lg:col-span-5 xl:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col lg:sticky lg:top-20 max-h-[calc(100vh-6rem)]">
-                <!-- Cart Header -->
-                <div class="p-4 border-b border-slate-800 flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <i class="fa-solid fa-receipt text-amber-400"></i>
-                        <h2 class="font-bold text-sm sm:text-base text-white">Pedido Atual</h2>
+            <!-- Right Column: Current Order / Comanda & Shift Quick Summary (5 cols on lg, 4 on xl) -->
+            <div class="lg:col-span-5 xl:col-span-4 flex flex-col gap-4 lg:sticky lg:top-20">
+                <div id="current-order-card" class="hidden bg-slate-900 border border-slate-800 rounded-2xl flex-col max-h-[54vh]">
+                    <!-- Cart Header -->
+                    <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-receipt text-amber-400"></i>
+                            <h2 class="font-bold text-sm sm:text-base text-white">Pedido Atual</h2>
+                        </div>
+                        <button onclick="clearCart()" class="text-xs text-slate-400 hover:text-red-400 font-medium transition-colors">
+                            <i class="fa-solid fa-trash-can mr-1"></i> Limpar
+                        </button>
                     </div>
-                    <button onclick="clearCart()" class="text-xs text-slate-400 hover:text-red-400 font-medium transition-colors">
-                        <i class="fa-solid fa-trash-can mr-1"></i> Limpar
-                    </button>
+
+                    <!-- Cart Items List -->
+                    <div id="cart-items-container" class="flex-1 overflow-y-auto p-4 space-y-2.5 min-h-[160px]">
+                        <!-- Rendered via JS -->
+                    </div>
+
+                    <!-- Cart Summary & Checkout Action -->
+                    <div class="p-4 bg-slate-950/70 border-t border-slate-800 rounded-b-2xl space-y-3">
+                        <div class="flex items-center justify-between text-xs text-slate-400">
+                            <span>Itens no pedido:</span>
+                            <span id="cart-total-items" class="font-semibold text-slate-200">0 un.</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm font-semibold text-slate-300">Total a Pagar</span>
+                            <span id="cart-total-value" class="text-2xl font-extrabold text-emerald-400">R$ 0,00</span>
+                        </div>
+
+                        <div class="grid grid-cols-12 gap-2">
+                            <button onclick="openQuickSangriaModal()" type="button" title="Realizar Sangria de Caixa" class="col-span-4 py-3.5 px-3 rounded-xl bg-orange-500/15 hover:bg-orange-500 text-orange-400 hover:text-slate-950 border border-orange-500/40 font-bold text-xs transition-all flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-hand-holding-dollar"></i>
+                                <span>Sangria</span>
+                            </button>
+                            <button onclick="openCheckoutModal()" id="btn-checkout" disabled class="col-span-8 py-3.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-800 disabled:text-slate-500 disabled:cursor-not-allowed text-slate-950 font-extrabold text-sm sm:text-base shadow-lg shadow-emerald-500/10 transition-all flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-check-circle"></i>
+                                <span>Finalizar Venda</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Cart Items List -->
-                <div id="cart-items-container" class="flex-1 overflow-y-auto p-4 space-y-2.5 min-h-[220px]">
-                    <!-- Rendered via JS -->
-                </div>
-
-                <!-- Cart Summary & Checkout Action -->
-                <div class="p-4 bg-slate-950/70 border-t border-slate-800 rounded-b-2xl space-y-3">
-                    <div class="flex items-center justify-between text-xs text-slate-400">
-                        <span>Itens no pedido:</span>
-                        <span id="cart-total-items" class="font-semibold text-slate-200">0 un.</span>
+                <!-- Shift Sales Summary & Recent History Card -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+                        <div>
+                            <h3 class="font-bold text-xs sm:text-sm text-white flex items-center gap-1.5">
+                                <i class="fa-solid fa-clock-rotate-left text-amber-400"></i> Resumo desde a Abertura
+                            </h3>
+                            <p id="pdv-shift-opened-label" class="text-[11px] text-slate-400 mt-0.5">Aberto às 08:00</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-[10px] uppercase tracking-wider text-slate-400 block font-semibold">Total Vendido</span>
+                            <span id="pdv-shift-total-sold" class="text-base sm:text-lg font-extrabold text-emerald-400">R$ 0,00</span>
+                        </div>
                     </div>
-                    <div class="flex items-center justify-between">
-                        <span class="text-sm font-semibold text-slate-300">Total a Pagar</span>
-                        <span id="cart-total-value" class="text-2xl font-extrabold text-emerald-400">R$ 0,00</span>
-                    </div>
 
-                    <button onclick="openCheckoutModal()" id="btn-checkout" disabled class="w-full py-3.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-800 disabled:text-slate-500 disabled:cursor-not-allowed text-slate-950 font-extrabold text-sm sm:text-base shadow-lg shadow-emerald-500/10 transition-all flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-check-circle"></i>
-                        <span>Finalizar Venda</span>
+                    <!-- Quick Sangria Action when Current Order Card is Hidden -->
+                    <button id="pdv-idle-sangria-btn" onclick="openQuickSangriaModal()" type="button" class="w-full py-2.5 px-3 rounded-xl bg-orange-500/15 hover:bg-orange-500 text-orange-400 hover:text-slate-950 border border-orange-500/40 font-bold text-xs transition-all flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-hand-holding-dollar"></i>
+                        <span>Realizar Sangria de Caixa</span>
                     </button>
+
+                    <!-- Payment Methods Breakdown Grid -->
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <div class="bg-slate-950 border border-emerald-500/25 rounded-xl px-3 py-2 flex items-center justify-between">
+                            <span class="text-slate-400 flex items-center gap-1.5 text-[11px]">
+                                <i class="fa-solid fa-money-bill-wave text-emerald-400"></i> Dinheiro
+                            </span>
+                            <strong id="pdv-shift-dinheiro" class="text-emerald-400 font-bold">R$ 0,00</strong>
+                        </div>
+                        <div class="bg-slate-950 border border-blue-500/25 rounded-xl px-3 py-2 flex items-center justify-between">
+                            <span class="text-slate-400 flex items-center gap-1.5 text-[11px]">
+                                <i class="fa-brands fa-pix text-blue-400"></i> Pix
+                            </span>
+                            <strong id="pdv-shift-pix" class="text-blue-400 font-bold">R$ 0,00</strong>
+                        </div>
+                        <div class="bg-slate-950 border border-amber-500/25 rounded-xl px-3 py-2 flex items-center justify-between">
+                            <span class="text-slate-400 flex items-center gap-1.5 text-[11px]">
+                                <i class="fa-solid fa-credit-card text-amber-400"></i> Débito
+                            </span>
+                            <strong id="pdv-shift-debito" class="text-amber-400 font-bold">R$ 0,00</strong>
+                        </div>
+                        <div class="bg-slate-950 border border-purple-500/25 rounded-xl px-3 py-2 flex items-center justify-between">
+                            <span class="text-slate-400 flex items-center gap-1.5 text-[11px]">
+                                <i class="fa-regular fa-credit-card text-purple-400"></i> Crédito
+                            </span>
+                            <strong id="pdv-shift-credito" class="text-purple-400 font-bold">R$ 0,00</strong>
+                        </div>
+                    </div>
+
+                    <!-- Recent Sales History List -->
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Últimas Vendas do Caixa</span>
+                            <span id="pdv-shift-sales-count" class="text-[10px] text-slate-500">0 venda(s)</span>
+                        </div>
+                        <div id="pdv-recent-sales-list" class="space-y-1.5 max-h-40 overflow-y-auto pr-1 text-xs">
+                            <!-- Rendered via JS -->
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -445,9 +523,84 @@
                     <button onclick="openPrintReportModal()" class="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold text-xs transition-all flex items-center gap-2 shadow-lg shadow-emerald-500/15">
                         <i class="fa-solid fa-file-pdf"></i> Gerar Relatório / Imprimir PDF
                     </button>
+                    <button onclick="openQuickSangriaModal()" class="px-4 py-2 rounded-xl bg-red-500/15 hover:bg-red-500 text-red-400 hover:text-white border border-red-500/40 font-bold text-xs transition-all flex items-center gap-2">
+                        <i class="fa-solid fa-hand-holding-dollar"></i> Fazer Sangria
+                    </button>
                     <button onclick="openShiftControlModal()" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs transition-all flex items-center gap-2">
                         <i class="fa-solid fa-cash-register"></i> Conferência / Fechar Turno
                     </button>
+                </div>
+            </div>
+
+            <!-- Payment Methods Summary Cards (Dinheiro, Débito, Crédito, Pix) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-slate-900 border border-emerald-500/30 rounded-2xl p-4 flex items-center justify-between">
+                    <div>
+                        <span class="text-xs text-slate-400 font-medium block">Vendas em Dinheiro</span>
+                        <p id="card-pay-dinheiro" class="text-2xl font-extrabold text-emerald-400 mt-1">R$ 0,00</p>
+                        <span id="card-pay-dinheiro-count" class="text-[11px] text-slate-500">0 venda(s)</span>
+                    </div>
+                    <div class="w-11 h-11 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center text-lg shrink-0">
+                        <i class="fa-solid fa-money-bill-wave"></i>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900 border border-amber-500/30 rounded-2xl p-4 flex items-center justify-between">
+                    <div>
+                        <span class="text-xs text-slate-400 font-medium block">Cartão de Débito</span>
+                        <p id="card-pay-debito" class="text-2xl font-extrabold text-amber-400 mt-1">R$ 0,00</p>
+                        <span id="card-pay-debito-count" class="text-[11px] text-slate-500">0 venda(s)</span>
+                    </div>
+                    <div class="w-11 h-11 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center text-lg shrink-0">
+                        <i class="fa-solid fa-credit-card"></i>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900 border border-purple-500/30 rounded-2xl p-4 flex items-center justify-between">
+                    <div>
+                        <span class="text-xs text-slate-400 font-medium block">Cartão de Crédito</span>
+                        <p id="card-pay-credito" class="text-2xl font-extrabold text-purple-400 mt-1">R$ 0,00</p>
+                        <span id="card-pay-credito-count" class="text-[11px] text-slate-500">0 venda(s)</span>
+                    </div>
+                    <div class="w-11 h-11 rounded-xl bg-purple-500/15 text-purple-400 flex items-center justify-center text-lg shrink-0">
+                        <i class="fa-regular fa-credit-card"></i>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900 border border-blue-500/30 rounded-2xl p-4 flex items-center justify-between">
+                    <div>
+                        <span class="text-xs text-slate-400 font-medium block">Vendas no Pix</span>
+                        <p id="card-pay-pix" class="text-2xl font-extrabold text-blue-400 mt-1">R$ 0,00</p>
+                        <span id="card-pay-pix-count" class="text-[11px] text-slate-500">0 venda(s)</span>
+                    </div>
+                    <div class="w-11 h-11 rounded-xl bg-blue-500/15 text-blue-400 flex items-center justify-center text-lg shrink-0">
+                        <i class="fa-brands fa-pix"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sangrias & Estornos Summary Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="bg-slate-900 border border-orange-500/30 rounded-2xl p-4 flex items-center justify-between">
+                    <div>
+                        <span class="text-xs text-slate-400 font-medium block">Sangrias Realizadas</span>
+                        <p id="card-total-sangrias" class="text-2xl font-extrabold text-orange-400 mt-1">R$ 0,00</p>
+                        <span id="card-total-sangrias-count" class="text-[11px] text-slate-500">0 retirada(s) de caixa</span>
+                    </div>
+                    <div class="w-11 h-11 rounded-xl bg-orange-500/15 text-orange-400 flex items-center justify-center text-lg shrink-0">
+                        <i class="fa-solid fa-hand-holding-dollar"></i>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900 border border-red-500/30 rounded-2xl p-4 flex items-center justify-between">
+                    <div>
+                        <span class="text-xs text-slate-400 font-medium block">Vendas Estornadas</span>
+                        <p id="card-total-estornos" class="text-2xl font-extrabold text-red-400 mt-1">R$ 0,00</p>
+                        <span id="card-total-estornos-count" class="text-[11px] text-slate-500">0 estorno(s) registrado(s)</span>
+                    </div>
+                    <div class="w-11 h-11 rounded-xl bg-red-500/15 text-red-400 flex items-center justify-center text-lg shrink-0">
+                        <i class="fa-solid fa-rotate-left"></i>
+                    </div>
                 </div>
             </div>
 
@@ -537,7 +690,7 @@
             <!-- Sales History Table -->
             <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
                 <div class="p-4 border-b border-slate-800 flex items-center justify-between">
-                    <h3 class="font-bold text-sm text-white"><i class="fa-solid fa-list-ul text-blue-400 mr-2"></i>Histórico Detalhado de Vendas</h3>
+                    <h3 class="font-bold text-sm text-white"><i class="fa-solid fa-list-ul text-blue-400 mr-2"></i>Histórico Detalhado de Vendas & Estornos</h3>
                     <span id="sales-history-badge" class="text-xs text-slate-400">Mostrando vendas do período</span>
                 </div>
                 <div class="overflow-x-auto">
@@ -550,7 +703,7 @@
                                 <th class="py-3 px-4">Pagamento</th>
                                 <th class="py-3 px-4">Recebido / Troco</th>
                                 <th class="py-3 px-4 text-right">Total</th>
-                                <th class="py-3 px-4 text-center">Comprovante</th>
+                                <th class="py-3 px-4 text-center">Ações</th>
                             </tr>
                         </thead>
                         <tbody id="sales-history-body" class="divide-y divide-slate-800/70 text-xs">
@@ -783,6 +936,81 @@
                     <!-- Rendered via JS -->
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Refund / Estorno Modal -->
+    <div id="refund-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] hidden items-center justify-center p-4">
+        <div class="bg-slate-900 border border-red-500/40 rounded-2xl max-w-md w-full overflow-hidden shadow-2xl">
+            <div class="p-4 sm:p-5 border-b border-slate-800 flex items-center justify-between bg-red-950/20">
+                <h3 class="font-bold text-sm sm:text-base text-white flex items-center gap-2">
+                    <i class="fa-solid fa-rotate-left text-red-400"></i> Registrar Estorno de Venda
+                </h3>
+                <button type="button" onclick="closeModal('refund-modal')" class="text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form onsubmit="confirmRefund(event)" class="p-5 space-y-4">
+                <input type="hidden" id="refund-sale-id">
+
+                <!-- Sale Info Summary -->
+                <div id="refund-sale-summary" class="bg-slate-950 border border-slate-800 rounded-xl p-3.5 text-xs space-y-1.5">
+                    <!-- Populated via JS -->
+                </div>
+
+                <!-- Reason Selection -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1.5">Motivo do Estorno / Reclamação</label>
+                    <select id="refund-reason-preset" onchange="toggleCustomRefundReason()" class="w-full bg-slate-950 border border-slate-700 focus:border-red-500 rounded-xl px-3 py-2.5 text-xs text-white outline-none">
+                        <option value="Lanche / Salgado estragado ou impróprio">Lanche / Salgado estragado ou impróprio</option>
+                        <option value="Produto frio, vencido ou com defeito">Produto frio, vencido ou com defeito</option>
+                        <option value="Pedido lançado errado pelo operador">Pedido lançado errado pelo operador</option>
+                        <option value="Desistência do cliente antes do consumo">Desistência do cliente antes do consumo</option>
+                        <option value="Outro">Outro motivo (especificar abaixo)</option>
+                    </select>
+                </div>
+
+                <div id="refund-custom-reason-box" class="hidden">
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Descreva o motivo</label>
+                    <input type="text" id="refund-custom-reason" placeholder="Ex: Embalagem violada / Bebida quente..." class="w-full bg-slate-950 border border-slate-700 focus:border-red-500 rounded-xl px-3.5 py-2 text-xs text-white outline-none">
+                </div>
+
+                <!-- Stock Destination Choice -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1.5">Destino dos Produtos no Estoque</label>
+                    <div class="grid grid-cols-1 gap-2">
+                        <label class="flex items-start gap-2.5 p-3 rounded-xl border border-red-500/40 bg-red-500/10 cursor-pointer">
+                            <input type="radio" name="refund-stock-action" value="discard" checked class="mt-0.5 accent-red-500">
+                            <div class="text-xs">
+                                <span class="font-bold text-red-300 block">Perda / Descarte (Não retornar ao estoque)</span>
+                                <span class="text-[11px] text-slate-400">Indicado para lanche estragado, avariado ou já manipulado.</span>
+                            </div>
+                        </label>
+                        <label class="flex items-start gap-2.5 p-3 rounded-xl border border-slate-800 bg-slate-950 hover:border-slate-700 cursor-pointer">
+                            <input type="radio" name="refund-stock-action" value="restock" class="mt-0.5 accent-emerald-500">
+                            <div class="text-xs">
+                                <span class="font-bold text-emerald-300 block">Devolver ao Estoque Disponível</span>
+                                <span class="text-[11px] text-slate-400">Indicado para erro de lançamento ou bebida lacrada não consumida.</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 text-[11px] text-amber-200 flex items-start gap-2">
+                    <i class="fa-solid fa-circle-info text-amber-400 mt-0.5"></i>
+                    <span>O valor será abatido do faturamento do dia e, caso tenha sido pago em <strong>Dinheiro</strong>, também será descontado automaticamente do saldo esperado da gaveta.</span>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2.5 pt-1">
+                    <button type="button" onclick="closeModal('refund-modal')" class="py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition-all">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white font-extrabold text-xs transition-all shadow-lg shadow-red-500/20">
+                        <i class="fa-solid fa-rotate-left mr-1"></i> Confirmar Estorno
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -1030,7 +1258,16 @@
         }
 
         // ==================== NAVIGATION & UI UPDATES ====================
+        function isAdminUser() {
+            const user = getActiveUser();
+            return user && user.role === 'Administrador';
+        }
+
         function switchTab(tabName) {
+            if (!isAdminUser() && tabName !== 'pdv') {
+                tabName = 'pdv';
+            }
+
             ['pdv', 'produtos', 'relatorios', 'usuarios'].forEach(t => {
                 document.getElementById(`view-${t}`).classList.add('hidden');
                 const btn = document.getElementById(`tab-${t}`);
@@ -1050,10 +1287,31 @@
 
         function updateHeaderStatus() {
             const user = getActiveUser();
+            const isAdmin = isAdminUser();
             const initials = user.name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
             document.getElementById('active-user-avatar').textContent = initials;
             document.getElementById('active-user-name').textContent = user.name;
             document.getElementById('active-user-role').textContent = `${user.role} • Trocar`;
+
+            // Role-based access control for tabs
+            ['produtos', 'relatorios', 'usuarios'].forEach(tab => {
+                const btn = document.getElementById(`tab-${tab}`);
+                if (btn) {
+                    if (isAdmin) {
+                        btn.classList.remove('hidden');
+                    } else {
+                        btn.classList.add('hidden');
+                    }
+                }
+            });
+
+            // If operator is currently on a restricted tab, redirect immediately to PDV
+            if (!isAdmin) {
+                const pdvHidden = document.getElementById('view-pdv').classList.contains('hidden');
+                if (pdvHidden) {
+                    switchTab('pdv');
+                }
+            }
 
             const shiftBtn = document.getElementById('shift-status-btn');
             const shiftDot = document.getElementById('shift-dot');
@@ -1291,23 +1549,34 @@
         }
 
         function renderCart() {
+            const orderCard = document.getElementById('current-order-card');
+            const idleSangriaBtn = document.getElementById('pdv-idle-sangria-btn');
             const container = document.getElementById('cart-items-container');
             const totalItemsEl = document.getElementById('cart-total-items');
             const totalValEl = document.getElementById('cart-total-value');
             const checkoutBtn = document.getElementById('btn-checkout');
 
             if (state.cart.length === 0) {
-                container.innerHTML = `
-                    <div class="h-full flex flex-col items-center justify-center text-center py-10 text-slate-500">
-                        <i class="fa-solid fa-basket-shopping text-3xl mb-2 opacity-40"></i>
-                        <p class="text-xs font-medium">Nenhum item adicionado</p>
-                        <p class="text-[11px] mt-0.5">Clique nos produtos ao lado para lançar</p>
-                    </div>
-                `;
+                if (orderCard) {
+                    orderCard.classList.add('hidden');
+                    orderCard.classList.remove('flex');
+                }
+                if (idleSangriaBtn) {
+                    idleSangriaBtn.classList.remove('hidden');
+                }
+                container.innerHTML = '';
                 totalItemsEl.textContent = '0 un.';
                 totalValEl.textContent = 'R$ 0,00';
                 checkoutBtn.disabled = true;
                 return;
+            }
+
+            if (orderCard) {
+                orderCard.classList.remove('hidden');
+                orderCard.classList.add('flex');
+            }
+            if (idleSangriaBtn) {
+                idleSangriaBtn.classList.add('hidden');
             }
 
             const totalQty = state.cart.reduce((acc, i) => acc + i.qty, 0);
@@ -1499,36 +1768,70 @@
             closeModal('checkout-modal');
             refreshAllUI();
 
-            Swal.fire({
-                icon: 'success',
-                title: 'Venda Registrada!',
-                html: `
-                    <div class="text-left bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs space-y-1.5 mt-2">
-                        <div class="flex justify-between"><span class="text-slate-400">Comprovante:</span><strong class="text-white">${saleId}</strong></div>
-                        <div class="flex justify-between"><span class="text-slate-400">Operador:</span><span class="text-slate-200">${operator.name}</span></div>
-                        <div class="flex justify-between"><span class="text-slate-400">Pagamento:</span><span class="text-amber-400 font-semibold">${method}</span></div>
-                        <div class="flex justify-between border-t border-slate-800 pt-1.5"><span class="text-slate-400">Total Venda:</span><strong class="text-emerald-400 text-sm">${formatCurrency(total)}</strong></div>
-                        ${method === 'Dinheiro' ? `
-                            <div class="flex justify-between"><span class="text-slate-400">Recebido:</span><span>${formatCurrency(received)}</span></div>
-                            <div class="flex justify-between"><span class="text-slate-400">Troco Devolvido:</span><strong class="text-amber-400 text-sm">${formatCurrency(change)}</strong></div>
-                        ` : ''}
-                    </div>
-                    ${newlyCriticalProducts.length > 0 ? `
-                        <div class="mt-3 p-2.5 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-300 text-xs font-semibold">
-                            <i class="fa-solid fa-triangle-exclamation mr-1"></i> Estoque crítico atingido: ${newlyCriticalProducts.join(', ')}
+            const showFinalSaleReceiptPopup = () => {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Venda Registrada!',
+                    html: `
+                        <div class="text-left bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs space-y-1.5 mt-2">
+                            <div class="flex justify-between"><span class="text-slate-400">Comprovante:</span><strong class="text-white">${saleId}</strong></div>
+                            <div class="flex justify-between"><span class="text-slate-400">Operador:</span><span class="text-slate-200">${operator.name}</span></div>
+                            <div class="flex justify-between"><span class="text-slate-400">Pagamento:</span><span class="text-amber-400 font-semibold">${method}</span></div>
+                            <div class="flex justify-between border-t border-slate-800 pt-1.5"><span class="text-slate-400">Total Venda:</span><strong class="text-emerald-400 text-sm">${formatCurrency(total)}</strong></div>
+                            ${method === 'Dinheiro' ? `
+                                <div class="flex justify-between"><span class="text-slate-400">Recebido:</span><span>${formatCurrency(received)}</span></div>
+                                <div class="flex justify-between"><span class="text-slate-400">Troco Devolvido:</span><strong class="text-amber-400 text-sm">${formatCurrency(change)}</strong></div>
+                            ` : ''}
                         </div>
-                    ` : ''}
-                `,
-                confirmButtonColor: '#10b981',
-                confirmButtonText: 'Próximo Atendimento'
-            });
+                        ${newlyCriticalProducts.length > 0 ? `
+                            <div class="mt-3 p-2.5 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-300 text-xs font-semibold">
+                                <i class="fa-solid fa-triangle-exclamation mr-1"></i> Estoque crítico atingido: ${newlyCriticalProducts.join(', ')}
+                            </div>
+                        ` : ''}
+                    `,
+                    confirmButtonColor: '#10b981',
+                    confirmButtonText: 'Próximo Atendimento'
+                });
+            };
+
+            if (method === 'Dinheiro') {
+                Swal.fire({
+                    icon: 'info',
+                    iconColor: '#f59e0b',
+                    title: 'Entregue o Troco ao Cliente',
+                    html: `
+                        <div class="space-y-3 mt-2">
+                            <div class="bg-amber-500/15 border-2 border-amber-500/60 rounded-2xl p-5 text-center shadow-inner">
+                                <span class="block text-[11px] font-bold uppercase tracking-widest text-amber-300">Valor do Troco</span>
+                                <p class="text-4xl font-black text-amber-400 mt-1">${formatCurrency(change)}</p>
+                            </div>
+                            <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs space-y-1">
+                                <div class="flex justify-between text-slate-400">
+                                    <span>Total da Venda:</span>
+                                    <strong class="text-emerald-400">${formatCurrency(total)}</strong>
+                                </div>
+                                <div class="flex justify-between text-slate-400">
+                                    <span>Valor Recebido:</span>
+                                    <strong class="text-white">${formatCurrency(received)}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    `,
+                    confirmButtonColor: '#f59e0b',
+                    confirmButtonText: '<i class="fa-solid fa-hand-holding-dollar mr-1.5"></i> Troco Entregue • Continuar'
+                }).then(() => {
+                    showFinalSaleReceiptPopup();
+                });
+            } else {
+                showFinalSaleReceiptPopup();
+            }
         }
 
         // ==================== SHIFT / CASH DRAWER CONTROL ====================
         function getDrawerMetrics() {
             const today = getTodayStr();
             const todayCashSales = state.sales
-                .filter(s => s.date === today && s.paymentMethod === 'Dinheiro')
+                .filter(s => s.date === today && s.paymentMethod === 'Dinheiro' && s.status !== 'estornada')
                 .reduce((acc, s) => acc + s.total, 0);
 
             const totalReforcos = (state.shift.adjustments || [])
@@ -1594,7 +1897,10 @@
 
                     <!-- Sangria / Reforço Quick Action -->
                     <div class="border border-slate-800 rounded-xl p-3.5 space-y-2.5">
-                        <p class="text-xs font-bold text-slate-300">Movimentação Avulsa (Sangria ou Reforço)</p>
+                        <div class="flex items-center justify-between">
+                            <p class="text-xs font-bold text-slate-300">Movimentação Avulsa (Sangria ou Reforço)</p>
+                            <span class="text-[10px] text-slate-400">Sangria: R$ 100 a R$ 500</span>
+                        </div>
                         <div class="grid grid-cols-3 gap-2">
                             <select id="adj-type" class="bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-white outline-none">
                                 <option value="sangria">Sangria (-)</option>
@@ -1656,74 +1962,329 @@
                 return;
             }
 
+            if (type === 'sangria' && (amount < 100 || amount > 500)) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Valor de Sangria Fora da Faixa',
+                    text: 'A sangria de caixa deve ser realizada a partir de R$ 100,00 até o limite de R$ 500,00.',
+                    confirmButtonColor: '#f59e0b'
+                });
+                return;
+            }
+
+            const metrics = getDrawerMetrics();
+            if (type === 'sangria' && amount > metrics.expectedCash) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Saldo Insuficiente na Gaveta',
+                    text: `O saldo atual em dinheiro na gaveta é ${formatCurrency(metrics.expectedCash)}.`,
+                    confirmButtonColor: '#ef4444'
+                });
+                return;
+            }
+
             const user = getActiveUser();
             const now = new Date();
-            state.shift.adjustments.push({ type, amount, reason, time: getTimeStr(now), operator: user.name });
+            const sangriaId = 'SG-' + (101 + (state.shift.adjustments || []).filter(a => a.type === 'sangria').length);
+            const timeStr = getTimeStr(now);
+            const dateStr = getTodayStr();
+            const prevDrawer = metrics.expectedCash;
+
+            state.shift.adjustments.push({ id: sangriaId, type, amount, reason, time: timeStr, date: dateStr, operator: user.name });
             state.shift.history.unshift({
+                id: sangriaId,
                 action: type === 'sangria' ? 'Sangria (-)' : 'Reforço (+)',
                 amount: amount,
                 operator: user.name,
-                time: getTimeStr(now),
-                date: getTodayStr(),
+                time: timeStr,
+                date: dateStr,
                 note: reason
-            });
-
-            saveState();
-            openShiftControlModal();
-            renderReports();
-            Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Movimentação registrada!', showConfirmButton: false, timer: 1600 });
-        }
-
-        function closeCurrentShift() {
-            const counted = parseFloat(document.getElementById('close-shift-counted').value) || 0;
-            const metrics = getDrawerMetrics();
-            const diff = counted - metrics.expectedCash;
-            const user = getActiveUser();
-            const now = new Date();
-
-            state.shift.isOpen = false;
-            state.shift.lastClosedCounted = counted;
-            state.shift.lastClosedExpected = metrics.expectedCash;
-            state.shift.lastClosedDiff = diff;
-            state.shift.lastClosedBy = user.name;
-            state.shift.lastClosedAt = getTimeStr(now);
-
-            state.shift.history.unshift({
-                action: 'Fechamento de Turno',
-                amount: counted,
-                operator: user.name,
-                time: getTimeStr(now),
-                date: getTodayStr(),
-                note: `Esperado: ${formatCurrency(metrics.expectedCash)} | Diferença: ${formatCurrency(diff)}`
             });
 
             saveState();
             closeModal('shift-modal');
             refreshAllUI();
 
-            let diffBadge = `<span class="text-emerald-400 font-bold">Caixa Batido (R$ 0,00)</span>`;
-            if (diff < -0.01) diffBadge = `<span class="text-red-400 font-bold">Falta / Quebra: ${formatCurrency(diff)}</span>`;
-            if (diff > 0.01) diffBadge = `<span class="text-blue-400 font-bold">Sobra de Caixa: +${formatCurrency(diff)}</span>`;
+            if (type === 'sangria') {
+                viewSangriaReceipt({
+                    id: sangriaId,
+                    amount,
+                    reason,
+                    operator: user.name,
+                    time: timeStr,
+                    date: dateStr,
+                    previousBalance: prevDrawer,
+                    remainingBalance: Math.max(0, prevDrawer - amount)
+                });
+            } else {
+                Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Reforço registrado!', showConfirmButton: false, timer: 1600 });
+            }
+        }
+
+        function viewSangriaReceipt(sangria) {
+            if (!sangria) return;
+            Swal.fire({
+                title: '',
+                padding: '0.5rem',
+                width: '400px',
+                customClass: {
+                    popup: 'swal2-receipt-popup'
+                },
+                html: `
+                    <div class="text-left mx-auto w-full max-w-[350px] drop-shadow-[0_20px_35px_rgba(0,0,0,0.75)] select-text font-mono">
+                        <!-- Top Serrated Paper Edge -->
+                        <div class="receipt-zigzag-top"></div>
+
+                        <!-- Thermal Paper Body -->
+                        <div class="bg-gradient-to-b from-yellow-50 via-[#fefce8] to-yellow-100/90 text-slate-900 px-5 py-4 relative overflow-hidden">
+                            
+                            <!-- Header -->
+                            <div class="text-center border-b border-dashed border-slate-500 pb-3">
+                                <p class="font-black text-sm tracking-tight text-slate-900 uppercase">QUIOSQUE GOURMET BH</p>
+                                <p class="text-[10px] text-slate-700">CNPJ: 00.000.000/0001-00 • IE: ISENTO</p>
+                                <p class="text-[10px] text-slate-700">Belo Horizonte - MG • TECH PEREIRA BH</p>
+                                <div class="mt-2 pt-1.5 border-t border-dashed border-slate-400">
+                                    <p class="font-extrabold text-[11px] tracking-wider uppercase text-red-700">
+                                        COMPROVANTE DE SANGRIA DE CAIXA
+                                    </p>
+                                    <p class="text-[9px] text-slate-600">RETIRADA DE NUMERÁRIO DA GAVETA</p>
+                                </div>
+                            </div>
+
+                            <!-- Meta Info -->
+                            <div class="py-2.5 border-b border-dashed border-slate-500 text-[10px] space-y-0.5 text-slate-800">
+                                <div class="flex justify-between">
+                                    <span>DOC. SANGRIA: <strong>${sangria.id}</strong></span>
+                                    <span>PDV: <strong>01</strong></span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>DATA: ${sangria.date.split('-').reverse().join('/')}</span>
+                                    <span>HORA: ${sangria.time}:00</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>OPERADOR:</span>
+                                    <strong class="uppercase">${sangria.operator}</strong>
+                                </div>
+                            </div>
+
+                            <!-- Sangria Value & Drawer Audit -->
+                            <div class="py-3 border-b border-dashed border-slate-500 space-y-1.5 text-[11px]">
+                                <div class="flex justify-between text-[10px] text-slate-700">
+                                    <span>SALDO ANTERIOR GAVETA:</span>
+                                    <span>${formatCurrency(sangria.previousBalance)}</span>
+                                </div>
+                                <div class="flex justify-between items-center text-sm font-black py-1 px-2 bg-red-100/80 border border-dashed border-red-400 text-red-800">
+                                    <span>VALOR RETIRADO (-):</span>
+                                    <span>${formatCurrency(sangria.amount)}</span>
+                                </div>
+                                <div class="flex justify-between text-[11px] font-bold text-slate-950 pt-0.5">
+                                    <span>SALDO REMANESCENTE:</span>
+                                    <span>${formatCurrency(sangria.remainingBalance)}</span>
+                                </div>
+                            </div>
+
+                            <!-- Reason -->
+                            <div class="py-2.5 border-b border-dashed border-slate-500 text-[10px] space-y-1">
+                                <span class="font-bold uppercase text-slate-700 block">MOTIVO / DESTINO DA RETIRADA:</span>
+                                <p class="text-slate-900 font-semibold uppercase leading-snug">${sangria.reason}</p>
+                            </div>
+
+                            <!-- Signatures & Barcode -->
+                            <div class="pt-5 text-center space-y-4 text-[10px]">
+                                <div>
+                                    <div class="border-t border-slate-800 w-4/5 mx-auto pt-1 font-bold text-slate-900">Assinatura do Operador</div>
+                                    <p class="text-[9px] text-slate-600">${sangria.operator}</p>
+                                </div>
+                                <div>
+                                    <div class="border-t border-slate-800 w-4/5 mx-auto pt-1 font-bold text-slate-900">Visto Responsável / Cofre</div>
+                                </div>
+
+                                <!-- Simulated Barcode -->
+                                <div class="pt-1">
+                                    <div class="h-5 w-4/5 mx-auto" style="background: repeating-linear-gradient(90deg, #0f172a 0px, #0f172a 2px, transparent 2px, transparent 4px, #0f172a 4px, #0f172a 5px, transparent 5px, transparent 8px, #0f172a 8px, #0f172a 11px, transparent 11px, transparent 13px);"></div>
+                                    <p class="text-[9px] tracking-[0.18em] text-slate-700 mt-0.5">${sangria.id}-${sangria.date.replace(/-/g, '')}</p>
+                                </div>
+
+                                <p class="text-[9px] text-slate-600 pt-1 border-t border-dashed border-slate-400">
+                                    CONTROLE INTERNO DE GAVETA<br>
+                                    Sistema PDV • TECH PEREIRA BH
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Bottom Serrated Paper Edge -->
+                        <div class="receipt-zigzag-bottom"></div>
+                    </div>
+                `,
+                showCancelButton: true,
+                cancelButtonColor: '#334155',
+                cancelButtonText: '<i class="fa-solid fa-print mr-1"></i> Imprimir',
+                confirmButtonColor: '#f59e0b',
+                confirmButtonText: 'Concluir'
+            }).then((res) => {
+                if (res.dismiss === Swal.DismissReason.cancel) {
+                    window.print();
+                }
+            });
+        }
+
+        function closeCurrentShift() {
+            const countedInput = document.getElementById('close-shift-counted');
+            const counted = parseFloat(countedInput ? countedInput.value : 0);
+            if (isNaN(counted) || counted < 0) {
+                Swal.fire({ icon: 'warning', title: 'Valor Inválido', text: 'Informe o valor físico contado na gaveta.' });
+                return;
+            }
+
+            const metrics = getDrawerMetrics();
+            const diff = counted - metrics.expectedCash;
+            const user = getActiveUser();
+            const now = new Date();
+            const timeStr = getTimeStr(now);
+            const dateStr = getTodayStr();
+
+            state.shift.isOpen = false;
+            state.shift.lastClosedCounted = counted;
+            state.shift.lastClosedDiff = diff;
+            state.shift.closedAt = timeStr;
+            state.shift.closedBy = user.name;
+            state.shift.history.unshift({
+                action: 'Fechamento de Turno',
+                amount: counted,
+                operator: user.name,
+                time: timeStr,
+                date: dateStr,
+                note: diff === 0
+                    ? 'Caixa fechado sem diferença'
+                    : `Diferença de ${formatCurrency(diff)}`
+            });
+
+            saveState();
+            closeModal('shift-modal');
+            refreshAllUI();
+
+            const diffColor = diff === 0 ? 'text-emerald-400' : (diff < 0 ? 'text-red-400' : 'text-amber-400');
+            const diffLabel = diff === 0 ? 'Caixa Batido (R$ 0,00)' : (diff < 0 ? `Falta de ${formatCurrency(Math.abs(diff))}` : `Sobra de ${formatCurrency(diff)}`);
 
             Swal.fire({
-                icon: 'info',
-                title: 'Fechamento de Turno Concluído',
+                icon: 'success',
+                title: 'Turno Encerrado!',
                 html: `
-                    <div class="text-left bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs space-y-2 mt-2">
-                        <div class="flex justify-between"><span class="text-slate-400">Responsável Fechamento:</span><strong class="text-white">${user.name}</strong></div>
+                    <div class="text-left bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs space-y-1.5 mt-2">
+                        <div class="flex justify-between"><span class="text-slate-400">Encerrado por:</span><strong class="text-white">${user.name}</strong></div>
                         <div class="flex justify-between"><span class="text-slate-400">Saldo Esperado:</span><span>${formatCurrency(metrics.expectedCash)}</span></div>
                         <div class="flex justify-between"><span class="text-slate-400">Valor Conferido:</span><strong class="text-white">${formatCurrency(counted)}</strong></div>
-                        <div class="flex justify-between border-t border-slate-800 pt-2"><span class="text-slate-400">Resultado:</span>${diffBadge}</div>
+                        <div class="flex justify-between border-t border-slate-800 pt-1.5"><span class="text-slate-400">Resultado:</span><strong class="${diffColor}">${diffLabel}</strong></div>
                     </div>
                 `,
                 showCancelButton: true,
                 confirmButtonColor: '#10b981',
                 cancelButtonColor: '#475569',
                 confirmButtonText: '<i class="fa-solid fa-file-pdf mr-1"></i> Imprimir Comprovante PDF',
-                cancelButtonText: 'Concluir'
+                cancelButtonText: 'Fechar'
             }).then((res) => {
                 if (res.isConfirmed) {
                     openPrintReportModal('fechamento', '80mm');
+                }
+            });
+        }
+
+        function openQuickSangriaModal() {
+            if (!state.shift.isOpen) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Caixa Fechado',
+                    text: 'Abra o turno de caixa antes de realizar uma sangria.',
+                    confirmButtonColor: '#f59e0b'
+                });
+                return;
+            }
+
+            const metrics = getDrawerMetrics();
+            const user = getActiveUser();
+
+            Swal.fire({
+                title: 'Realizar Sangria de Caixa',
+                html: `
+                    <div class="text-left space-y-3 mt-2 text-xs">
+                        <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 flex items-center justify-between">
+                            <span class="text-slate-400">Saldo Atual na Gaveta:</span>
+                            <strong class="text-amber-400 text-sm">${formatCurrency(metrics.expectedCash)}</strong>
+                        </div>
+                        <p class="text-[11px] text-slate-400">Valor permitido por sangria: <strong class="text-slate-200">R$ 100,00 até R$ 500,00</strong>.</p>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">Valor da Sangria (R$)</label>
+                            <input type="number" id="swal-sangria-amount" step="0.01" min="100" max="500" value="100.00" class="swal2-input !m-0 !w-full !text-lg !font-bold">
+                        </div>
+                        <div class="grid grid-cols-5 gap-1.5">
+                            <button type="button" onclick="document.getElementById('swal-sangria-amount').value='100.00'" class="py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-[11px] font-bold text-slate-200 border border-slate-700">R$ 100</button>
+                            <button type="button" onclick="document.getElementById('swal-sangria-amount').value='200.00'" class="py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-[11px] font-bold text-slate-200 border border-slate-700">R$ 200</button>
+                            <button type="button" onclick="document.getElementById('swal-sangria-amount').value='300.00'" class="py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-[11px] font-bold text-slate-200 border border-slate-700">R$ 300</button>
+                            <button type="button" onclick="document.getElementById('swal-sangria-amount').value='400.00'" class="py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-[11px] font-bold text-slate-200 border border-slate-700">R$ 400</button>
+                            <button type="button" onclick="document.getElementById('swal-sangria-amount').value='500.00'" class="py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-[11px] font-bold text-slate-200 border border-slate-700">R$ 500</button>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">Motivo / Destino da Retirada</label>
+                            <input type="text" id="swal-sangria-reason" class="swal2-input !m-0 !w-full !text-xs" placeholder="Ex: Recolhimento administrativo / Pagamento fornecedor">
+                        </div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#475569',
+                confirmButtonText: '<i class="fa-solid fa-hand-holding-dollar mr-1"></i> Confirmar Sangria',
+                cancelButtonText: 'Cancelar',
+                preConfirm: () => {
+                    const amount = parseFloat(document.getElementById('swal-sangria-amount').value);
+                    const reason = document.getElementById('swal-sangria-reason').value.trim() || 'Sangria de segurança / recolhimento';
+                    if (isNaN(amount) || amount < 100 || amount > 500) {
+                        Swal.showValidationMessage('Informe um valor entre R$ 100,00 e R$ 500,00.');
+                        return false;
+                    }
+                    if (amount > metrics.expectedCash) {
+                        Swal.showValidationMessage(`Saldo insuficiente na gaveta (${formatCurrency(metrics.expectedCash)}).`);
+                        return false;
+                    }
+                    return { amount, reason };
+                }
+            }).then((res) => {
+                if (res.isConfirmed) {
+                    const now = new Date();
+                    const sangriaId = 'SG-' + (101 + (state.shift.adjustments || []).filter(a => a.type === 'sangria').length);
+                    const timeStr = getTimeStr(now);
+                    const dateStr = getTodayStr();
+                    const prevDrawer = metrics.expectedCash;
+
+                    state.shift.adjustments.push({
+                        id: sangriaId,
+                        type: 'sangria',
+                        amount: res.value.amount,
+                        reason: res.value.reason,
+                        time: timeStr,
+                        date: dateStr,
+                        operator: user.name
+                    });
+                    state.shift.history.unshift({
+                        id: sangriaId,
+                        action: 'Sangria (-)',
+                        amount: res.value.amount,
+                        operator: user.name,
+                        time: timeStr,
+                        date: dateStr,
+                        note: res.value.reason
+                    });
+                    saveState();
+                    refreshAllUI();
+                    viewSangriaReceipt({
+                        id: sangriaId,
+                        amount: res.value.amount,
+                        reason: res.value.reason,
+                        operator: user.name,
+                        time: timeStr,
+                        date: dateStr,
+                        previousBalance: prevDrawer,
+                        remainingBalance: Math.max(0, prevDrawer - res.value.amount)
+                    });
                 }
             });
         }
@@ -1767,11 +2328,15 @@
                 docEl.className = 'format-a4 bg-white text-slate-900 w-full max-w-[210mm] h-fit shrink-0 rounded-lg shadow-2xl p-6 sm:p-10 font-sans text-xs';
             }
 
-            const filteredSales = state.sales.filter(s => {
+            const allSalesInFilter = state.sales.filter(s => {
                 const matchDate = !selectedDate || s.date === selectedDate;
                 const matchOp = selectedOp === 'Todos' || s.operatorId === selectedOp;
                 return matchDate && matchOp;
             });
+
+            const filteredSales = allSalesInFilter.filter(s => s.status !== 'estornada');
+            const refundedSales = allSalesInFilter.filter(s => s.status === 'estornada');
+            const totalRefunded = refundedSales.reduce((sum, s) => sum + s.total, 0);
 
             const totalRevenue = filteredSales.reduce((sum, s) => sum + s.total, 0);
             const salesCount = filteredSales.length;
@@ -1795,7 +2360,7 @@
 
             // Drawer / Cash metrics
             const cashSalesForDate = state.sales
-                .filter(s => (!selectedDate || s.date === selectedDate) && s.paymentMethod === 'Dinheiro')
+                .filter(s => (!selectedDate || s.date === selectedDate) && s.paymentMethod === 'Dinheiro' && s.status !== 'estornada')
                 .reduce((acc, s) => acc + s.total, 0);
 
             const totalReforcos = (state.shift.adjustments || [])
@@ -1821,7 +2386,7 @@
 
             // Operator Breakdown
             const operatorRows = state.users.map(u => {
-                const uSales = state.sales.filter(s => (!selectedDate || s.date === selectedDate) && s.operatorId === u.id);
+                const uSales = state.sales.filter(s => (!selectedDate || s.date === selectedDate) && s.operatorId === u.id && s.status !== 'estornada');
                 const uTotal = uSales.reduce((acc, s) => acc + s.total, 0);
                 const uAvg = uSales.length > 0 ? uTotal / uSales.length : 0;
                 return { name: u.name, role: u.role, count: uSales.length, avg: uAvg, total: uTotal };
@@ -1893,9 +2458,15 @@
                                 </div>
                             `).join('')}
                             <div class="flex justify-between font-bold text-xs border-t border-slate-300 pt-1 mt-1">
-                                <span>FATURAMENTO TOTAL:</span>
+                                <span>FATURAMENTO LÍQUIDO:</span>
                                 <span>${formatCurrency(totalRevenue)}</span>
                             </div>
+                            ${refundedSales.length > 0 ? `
+                                <div class="flex justify-between text-[10px] text-slate-700 mt-0.5">
+                                    <span>Estornos (${refundedSales.length}x):</span>
+                                    <span>-${formatCurrency(totalRefunded)}</span>
+                                </div>
+                            ` : ''}
                             <div class="flex justify-between text-[10px] text-slate-600">
                                 <span>Vendas: ${salesCount} un.</span>
                                 <span>Ticket Médio: ${formatCurrency(avgTicket)}</span>
@@ -2112,25 +2683,33 @@
 
                         ${criticalProducts.length > 0 ? `
                             <div class="sm:col-span-5">
-                                <h2 class="text-xs font-extrabold uppercase tracking-wider text-red-800 border-b border-red-300 pb-1.5 mb-2.5">Alerta de Reposição (Estoque Crítico)</h2>
-                                <div class="border border-red-300 bg-red-50/60 rounded p-2.5 space-y-1.5 text-[11px]">
-                                    ${criticalProducts.map(p => `
-                                        <div class="flex justify-between items-center border-b border-red-200/70 pb-1 last:border-b-0 last:pb-0">
-                                            <span class="font-semibold text-slate-800">${p.name}</span>
-                                            <span class="px-1.5 py-0.5 rounded bg-red-600 text-white font-bold text-[10px]">${p.stock <= 0 ? 'ESGOTADO' : `Restam ${p.stock}`}</span>
-                                        </div>
-                                    `).join('')}
-                                </div>
+                                <h2 class="text-xs font-extrabold uppercase tracking-wider text-amber-800 border-b border-amber-300 pb-1.5 mb-2.5">Alerta de Reposição de Estoque</h2>
+                                <table class="w-full border border-amber-300 text-xs">
+                                    <thead>
+                                        <tr class="bg-amber-50 border-b border-amber-300 text-left text-[10px] uppercase text-amber-900">
+                                            <th class="py-1.5 px-2.5">Item</th>
+                                            <th class="py-1.5 px-2.5 text-right">Saldo</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-amber-200">
+                                        ${criticalProducts.map(p => `
+                                            <tr>
+                                                <td class="py-1.5 px-2.5 font-medium">${p.name}</td>
+                                                <td class="py-1.5 px-2.5 text-right font-extrabold ${p.stock <= 0 ? 'text-red-700' : 'text-amber-700'}">${p.stock} un.</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
                             </div>
                         ` : ''}
                     </div>
                 ` : ''}
 
                 ${showSalesDetailSection ? `
-                    <!-- Section 5: Detailed Sales Log -->
-                    <div class="mb-8">
-                        <h2 class="text-xs font-extrabold uppercase tracking-wider text-slate-800 border-b border-slate-300 pb-1.5 mb-2.5">5. Detalhamento das Vendas Registradas</h2>
-                        ${filteredSales.length === 0 ? `<p class="text-xs text-slate-500">Nenhuma venda registrada para o filtro selecionado.</p>` : `
+                    <!-- Section 5: Detailed Sales List -->
+                    <div class="mb-6">
+                        <h2 class="text-xs font-extrabold uppercase tracking-wider text-slate-800 border-b border-slate-300 pb-1.5 mb-2.5">5. Detalhamento das Vendas Válidas no Período</h2>
+                        ${filteredSales.length === 0 ? `<p class="text-xs text-slate-500">Nenhuma venda válida registrada no filtro.</p>` : `
                             <table class="w-full border border-slate-300 text-[11px]">
                                 <thead>
                                     <tr class="bg-slate-100 border-b border-slate-300 text-left text-[10px] uppercase text-slate-700">
@@ -2138,7 +2717,7 @@
                                         <th class="py-1.5 px-2.5">Operador</th>
                                         <th class="py-1.5 px-2.5">Itens</th>
                                         <th class="py-1.5 px-2.5">Pagamento</th>
-                                        <th class="py-1.5 px-2.5 text-right">Valor</th>
+                                        <th class="py-1.5 px-2.5 text-right">Total</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-200">
@@ -2154,6 +2733,33 @@
                                 </tbody>
                             </table>
                         `}
+                    </div>
+                ` : ''}
+
+                ${refundedSales.length > 0 ? `
+                    <!-- Section 6: Refunded Sales -->
+                    <div class="mb-8">
+                        <h2 class="text-xs font-extrabold uppercase tracking-wider text-red-800 border-b border-red-300 pb-1.5 mb-2.5">Vendas Estornadas / Devoluções no Período (${refundedSales.length})</h2>
+                        <table class="w-full border border-red-300 text-[11px]">
+                            <thead>
+                                <tr class="bg-red-50 border-b border-red-300 text-left text-[10px] uppercase text-red-900">
+                                    <th class="py-1.5 px-2.5">ID / Hora Estorno</th>
+                                    <th class="py-1.5 px-2.5">Autorizado Por</th>
+                                    <th class="py-1.5 px-2.5">Motivo / Destino Estoque</th>
+                                    <th class="py-1.5 px-2.5 text-right">Valor Estornado</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-red-200">
+                                ${refundedSales.map(s => `
+                                    <tr>
+                                        <td class="py-1.5 px-2.5 font-bold whitespace-nowrap">${s.id} (${s.refundedAt || s.time})</td>
+                                        <td class="py-1.5 px-2.5">${s.refundedBy || s.operatorName}</td>
+                                        <td class="py-1.5 px-2.5 text-slate-700">${s.refundReason || 'Estorno'} • <em>${s.refundStockAction === 'restock' ? 'Devolvido ao estoque' : 'Descarte/Perda'}</em></td>
+                                        <td class="py-1.5 px-2.5 text-right font-bold text-red-700">-${formatCurrency(s.total)}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
                     </div>
                 ` : ''}
 
@@ -2236,15 +2842,22 @@
             if (!state.stockMovements || state.stockMovements.length === 0) {
                 movList.innerHTML = `<p class="text-slate-500">Nenhuma movimentação manual registrada.</p>`;
             } else {
-                movList.innerHTML = state.stockMovements.slice(0, 12).map(m => `
-                    <div class="flex items-center justify-between bg-slate-950/70 border border-slate-800/80 rounded-xl px-3.5 py-2">
-                        <div class="flex items-center gap-2.5">
-                            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${m.type === 'Entrada' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-red-500/15 text-red-400'}">${m.type} (+${m.qty})</span>
-                            <span class="font-semibold text-slate-200">${m.product}</span>
+                movList.innerHTML = state.stockMovements.slice(0, 12).map(m => {
+                    const isPositive = m.type === 'Entrada' || m.type === 'Estorno (Devolução)';
+                    const badgeClass = isPositive
+                        ? 'bg-emerald-500/15 text-emerald-400'
+                        : 'bg-red-500/15 text-red-400';
+                    const qtyPrefix = isPositive ? '+' : '';
+                    return `
+                        <div class="flex items-center justify-between bg-slate-950/70 border border-slate-800/80 rounded-xl px-3.5 py-2">
+                            <div class="flex items-center gap-2.5">
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold ${badgeClass}">${m.type} (${qtyPrefix}${m.qty})</span>
+                                <span class="font-semibold text-slate-200">${m.product}</span>
+                            </div>
+                            <span class="text-slate-400 text-[11px]">${m.date.split('-').reverse().join('/')} ${m.time} • ${m.operator}</span>
                         </div>
-                        <span class="text-slate-400 text-[11px]">${m.date.split('-').reverse().join('/')} ${m.time} • ${m.operator}</span>
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
             }
         }
 
@@ -2417,11 +3030,32 @@
             const selectedDate = dateInput.value;
             const selectedOp = opSelect.value;
 
-            const filteredSales = state.sales.filter(s => {
+            const allFilteredSales = state.sales.filter(s => {
                 const matchDate = !selectedDate || s.date === selectedDate;
                 const matchOp = selectedOp === 'Todos' || s.operatorId === selectedOp;
                 return matchDate && matchOp;
             });
+
+            const filteredSales = allFilteredSales.filter(s => s.status !== 'estornada');
+            const refundedSalesList = allFilteredSales.filter(s => s.status === 'estornada');
+            const refundedCount = refundedSalesList.length;
+            const refundedTotalValue = refundedSalesList.reduce((acc, s) => acc + s.total, 0);
+
+            // Sangrias filtered by date and operator
+            const selectedOpName = selectedOp === 'Todos' ? null : (state.users.find(u => u.id === selectedOp)?.name || null);
+            const filteredSangrias = (state.shift.history || []).filter(h => {
+                const isSangria = h.action && h.action.startsWith('Sangria');
+                const matchDate = !selectedDate || h.date === selectedDate;
+                const matchOp = !selectedOpName || h.operator === selectedOpName;
+                return isSangria && matchDate && matchOp;
+            });
+            const sangriasTotalValue = filteredSangrias.reduce((acc, h) => acc + h.amount, 0);
+
+            document.getElementById('card-total-sangrias').textContent = formatCurrency(sangriasTotalValue);
+            document.getElementById('card-total-sangrias-count').textContent = `${filteredSangrias.length} retirada(s) de caixa`;
+
+            document.getElementById('card-total-estornos').textContent = formatCurrency(refundedTotalValue);
+            document.getElementById('card-total-estornos-count').textContent = `${refundedCount} estorno(s) registrado(s)`;
 
             // KPIs
             const revenue = filteredSales.reduce((acc, s) => acc + s.total, 0);
@@ -2442,7 +3076,7 @@
             const topProdText = sortedProds.length > 0 ? `${sortedProds[0][0]} (${sortedProds[0][1]}x)` : '-';
 
             document.getElementById('kpi-revenue').textContent = formatCurrency(revenue);
-            document.getElementById('kpi-sales-count').textContent = `${salesCount} ${salesCount === 1 ? 'venda realizada' : 'vendas realizadas'}`;
+            document.getElementById('kpi-sales-count').textContent = `${salesCount} ${salesCount === 1 ? 'venda válida' : 'vendas válidas'}${refundedCount > 0 ? ` • ${refundedCount} estornada(s)` : ''}`;
             document.getElementById('kpi-drawer-cash').textContent = formatCurrency(drawerMetrics.expectedCash);
             document.getElementById('kpi-drawer-detail').textContent = `Inicial ${formatCurrency(state.shift.initialCash || 0)} + Dinheiro ${formatCurrency(drawerMetrics.todayCashSales)}`;
             document.getElementById('kpi-avg-ticket').textContent = formatCurrency(avgTicket);
@@ -2458,9 +3092,28 @@
             ];
 
             const methodTotals = methods.map(m => {
-                const sum = filteredSales.filter(s => s.paymentMethod === m.name).reduce((acc, s) => acc + s.total, 0);
-                return { ...m, total: sum };
+                const list = filteredSales.filter(s => s.paymentMethod === m.name);
+                const sum = list.reduce((acc, s) => acc + s.total, 0);
+                return { ...m, total: sum, count: list.length };
             });
+
+            // Update Payment Summary Cards
+            const dinheiroData = methodTotals.find(m => m.name === 'Dinheiro') || { total: 0, count: 0 };
+            const debitoData = methodTotals.find(m => m.name === 'Cartão de Débito') || { total: 0, count: 0 };
+            const creditoData = methodTotals.find(m => m.name === 'Cartão de Crédito') || { total: 0, count: 0 };
+            const pixData = methodTotals.find(m => m.name === 'Pix') || { total: 0, count: 0 };
+
+            document.getElementById('card-pay-dinheiro').textContent = formatCurrency(dinheiroData.total);
+            document.getElementById('card-pay-dinheiro-count').textContent = `${dinheiroData.count} venda(s)`;
+
+            document.getElementById('card-pay-debito').textContent = formatCurrency(debitoData.total);
+            document.getElementById('card-pay-debito-count').textContent = `${debitoData.count} venda(s)`;
+
+            document.getElementById('card-pay-credito').textContent = formatCurrency(creditoData.total);
+            document.getElementById('card-pay-credito-count').textContent = `${creditoData.count} venda(s)`;
+
+            document.getElementById('card-pay-pix').textContent = formatCurrency(pixData.total);
+            document.getElementById('card-pay-pix-count').textContent = `${pixData.count} venda(s)`;
 
             document.getElementById('payment-breakdown-list').innerHTML = methodTotals.map(m => `
                 <div class="flex items-center justify-between">
@@ -2508,7 +3161,7 @@
             // Operator Performance Table
             const opBody = document.getElementById('operator-performance-body');
             opBody.innerHTML = state.users.map(u => {
-                const uSales = state.sales.filter(s => (!selectedDate || s.date === selectedDate) && s.operatorId === u.id);
+                const uSales = state.sales.filter(s => (!selectedDate || s.date === selectedDate) && s.operatorId === u.id && s.status !== 'estornada');
                 const uTotal = uSales.reduce((acc, s) => acc + s.total, 0);
                 return `
                     <tr class="hover:bg-slate-800/40">
@@ -2539,29 +3192,45 @@
 
             // Sales History Table
             const salesBody = document.getElementById('sales-history-body');
-            document.getElementById('sales-history-badge').textContent = `${filteredSales.length} venda(s) encontrada(s)`;
+            document.getElementById('sales-history-badge').textContent = `${allFilteredSales.length} registro(s) no período${refundedCount > 0 ? ` (${refundedCount} estorno)` : ''}`;
 
-            if (filteredSales.length === 0) {
+            if (allFilteredSales.length === 0) {
                 salesBody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-500">Nenhuma venda registrada para o filtro selecionado.</td></tr>`;
             } else {
-                salesBody.innerHTML = filteredSales.map(s => {
+                salesBody.innerHTML = allFilteredSales.map(s => {
+                    const isRefunded = s.status === 'estornada';
                     const itemsSummary = s.items.map(i => `${i.qty}x ${i.name}`).join(', ');
                     const cashDetail = s.paymentMethod === 'Dinheiro'
                         ? `Rec: ${formatCurrency(s.received)} | Troco: <span class="text-amber-400 font-semibold">${formatCurrency(s.change)}</span>`
                         : `<span class="text-slate-500">Valor exato</span>`;
 
                     return `
-                        <tr class="hover:bg-slate-800/40 transition-colors">
-                            <td class="py-3 px-4 font-bold text-white whitespace-nowrap">${s.id} <span class="text-slate-400 font-normal">(${s.time})</span></td>
+                        <tr class="${isRefunded ? 'bg-red-950/15 opacity-80' : 'hover:bg-slate-800/40'} transition-colors">
+                            <td class="py-3 px-4 font-bold text-white whitespace-nowrap">
+                                <span class="${isRefunded ? 'line-through text-slate-400' : ''}">${s.id}</span>
+                                <span class="text-slate-400 font-normal">(${s.time})</span>
+                                ${isRefunded ? `<span class="ml-1.5 px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 border border-red-500/40 text-[10px] font-extrabold uppercase">Estornada</span>` : ''}
+                            </td>
                             <td class="py-3 px-4 text-slate-200">${s.operatorName}</td>
-                            <td class="py-3 px-4 text-slate-400 max-w-xs truncate" title="${itemsSummary}">${itemsSummary}</td>
+                            <td class="py-3 px-4 text-slate-400 max-w-xs truncate" title="${itemsSummary}">
+                                <span class="${isRefunded ? 'line-through' : ''}">${itemsSummary}</span>
+                                ${isRefunded && s.refundReason ? `<span class="block text-[10px] text-red-400 truncate">Motivo: ${s.refundReason}</span>` : ''}
+                            </td>
                             <td class="py-3 px-4"><span class="px-2 py-0.5 rounded-lg bg-slate-800 text-slate-200 font-semibold">${s.paymentMethod}</span></td>
                             <td class="py-3 px-4 text-slate-300 whitespace-nowrap">${cashDetail}</td>
-                            <td class="py-3 px-4 text-right font-extrabold text-emerald-400 whitespace-nowrap">${formatCurrency(s.total)}</td>
-                            <td class="py-3 px-4 text-center">
-                                <button onclick="viewSaleReceipt('${s.id}')" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-amber-500 hover:text-slate-950 text-slate-300 font-semibold transition-colors">
-                                    <i class="fa-solid fa-receipt"></i>
-                                </button>
+                            <td class="py-3 px-4 text-right font-extrabold ${isRefunded ? 'text-red-400 line-through' : 'text-emerald-400'} whitespace-nowrap">${formatCurrency(s.total)}</td>
+                            <td class="py-3 px-4 text-center whitespace-nowrap">
+                                <div class="inline-flex items-center gap-1.5">
+                                    <button onclick="viewSaleReceipt('${s.id}')" title="Ver Comprovante" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-amber-500 hover:text-slate-950 text-slate-300 font-semibold transition-colors">
+                                        <i class="fa-solid fa-receipt"></i>
+                                    </button>
+                                    ${!isRefunded ? `
+                                        <button onclick="openRefundModal('${s.id}')" title="Estornar / Devolver Venda" class="px-2.5 py-1.5 rounded-lg bg-red-500/15 hover:bg-red-500 text-red-400 hover:text-white border border-red-500/30 font-bold text-[11px] transition-all flex items-center gap-1">
+                                            <i class="fa-solid fa-rotate-left"></i>
+                                            <span class="hidden xl:inline">Estornar</span>
+                                        </button>
+                                    ` : ''}
+                                </div>
                             </td>
                         </tr>
                     `;
@@ -2573,31 +3242,278 @@
             const sale = state.sales.find(s => s.id === saleId);
             if (!sale) return;
 
+            const isRefunded = sale.status === 'estornada';
+            const totalItemsQty = sale.items.reduce((acc, i) => acc + i.qty, 0);
+
             Swal.fire({
-                title: `Comprovante ${sale.id}`,
+                title: '',
+                padding: '0.5rem',
+                width: '400px',
+                customClass: {
+                    popup: 'swal2-receipt-popup'
+                },
                 html: `
-                    <div class="text-left bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs space-y-2">
-                        <div class="flex justify-between text-slate-400"><span>Data/Hora:</span><span>${sale.date.split('-').reverse().join('/')} às ${sale.time}</span></div>
-                        <div class="flex justify-between text-slate-400"><span>Operador:</span><strong class="text-white">${sale.operatorName}</strong></div>
-                        <div class="border-t border-slate-800 pt-2 space-y-1">
-                            ${sale.items.map(i => `
-                                <div class="flex justify-between">
-                                    <span>${i.qty}x ${i.name}</span>
-                                    <span>${formatCurrency(i.qty * i.price)}</span>
+                    <div class="text-left mx-auto w-full max-w-[350px] drop-shadow-[0_20px_35px_rgba(0,0,0,0.75)] select-text font-mono">
+                        <!-- Top Serrated Paper Edge -->
+                        <div class="receipt-zigzag-top"></div>
+
+                        <!-- Thermal Paper Body -->
+                        <div class="bg-gradient-to-b from-yellow-50 via-[#fefce8] to-yellow-100/90 text-slate-900 px-5 py-4 relative overflow-hidden">
+                            
+                            ${isRefunded ? `
+                                <!-- Watermark Stamp for Refunded -->
+                                <div class="pointer-events-none absolute inset-0 flex items-center justify-center opacity-20 -rotate-12 z-10">
+                                    <span class="border-4 border-red-700 text-red-700 font-black text-3xl px-4 py-1 tracking-widest uppercase">ESTORNADO</span>
                                 </div>
-                            `).join('')}
+                            ` : ''}
+
+                            <!-- Fiscal Header -->
+                            <div class="text-center border-b border-dashed border-slate-500 pb-3">
+                                <p class="font-black text-sm tracking-tight text-slate-900 uppercase">QUIOSQUE GOURMET BH</p>
+                                <p class="text-[10px] text-slate-700">CNPJ: 00.000.000/0001-00 • IE: ISENTO</p>
+                                <p class="text-[10px] text-slate-700">Belo Horizonte - MG • TECH PEREIRA BH</p>
+                                <div class="mt-2 pt-1.5 border-t border-dashed border-slate-400">
+                                    <p class="font-extrabold text-[11px] tracking-wider uppercase ${isRefunded ? 'text-red-700' : 'text-slate-900'}">
+                                        ${isRefunded ? '*** CUPOM ESTORNADO ***' : 'EXTRATO DE VENDA / RECIBO'}
+                                    </p>
+                                    <p class="text-[9px] text-slate-600">DOCUMENTO AUXILIAR DE CONTROLE INTERNO</p>
+                                </div>
+                            </div>
+
+                            ${isRefunded ? `
+                                <!-- Refund Alert Box -->
+                                <div class="mt-2.5 p-2 border border-dashed border-red-600 bg-red-100/80 text-red-900 text-[10px] space-y-0.5">
+                                    <p class="font-extrabold uppercase">[!] OPERAÇÃO ESTORNADA</p>
+                                    <p>MOTIVO: ${sale.refundReason}</p>
+                                    <p>RESP.: ${sale.refundedBy} (${sale.refundedAt})</p>
+                                    <p>DESTINO: ${sale.refundStockAction === 'restock' ? 'RETORNADO AO ESTOQUE' : 'DESCARTE / PERDA'}</p>
+                                </div>
+                            ` : ''}
+
+                            <!-- Meta Info -->
+                            <div class="py-2.5 border-b border-dashed border-slate-500 text-[10px] space-y-0.5 text-slate-800">
+                                <div class="flex justify-between">
+                                    <span>CUPOM Nº: <strong>${sale.id}</strong></span>
+                                    <span>PDV: <strong>01</strong></span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>DATA: ${sale.date.split('-').reverse().join('/')}</span>
+                                    <span>HORA: ${sale.time}:00</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>OPERADOR:</span>
+                                    <strong class="uppercase">${sale.operatorName}</strong>
+                                </div>
+                                <div>CONSUMIDOR: NÃO IDENTIFICADO</div>
+                            </div>
+
+                            <!-- Fiscal Table Header -->
+                            <div class="pt-2 pb-1 border-b border-dashed border-slate-500 text-[9px] font-bold uppercase text-slate-700 flex justify-between">
+                                <span># ITEM / DESCRIÇÃO</span>
+                                <span>QTD x UN = TOTAL</span>
+                            </div>
+
+                            <!-- Items List -->
+                            <div class="py-2 border-b border-dashed border-slate-500 space-y-2 text-[11px]">
+                                ${sale.items.map((i, idx) => `
+                                    <div>
+                                        <div class="font-bold text-slate-900 leading-tight uppercase">
+                                            ${String(idx + 1).padStart(3, '0')} ${i.name}
+                                        </div>
+                                        <div class="flex justify-between text-[10px] text-slate-700 pl-6">
+                                            <span>${i.qty} UN x ${formatCurrency(i.price)}</span>
+                                            <strong class="text-slate-900">${formatCurrency(i.qty * i.price)}</strong>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+
+                            <!-- Totals & Payment -->
+                            <div class="py-2.5 border-b border-dashed border-slate-500 space-y-1 text-[11px]">
+                                <div class="flex justify-between text-[10px] text-slate-700">
+                                    <span>QTD. TOTAL DE ITENS</span>
+                                    <strong>${String(totalItemsQty).padStart(3, '0')}</strong>
+                                </div>
+                                <div class="flex justify-between items-center text-sm font-black pt-0.5 ${isRefunded ? 'text-red-700 line-through' : 'text-slate-950'}">
+                                    <span>VALOR TOTAL R$</span>
+                                    <span>${formatCurrency(sale.total)}</span>
+                                </div>
+                                <div class="flex justify-between text-[10px] text-slate-800 pt-1">
+                                    <span>FORMA PAGAMENTO:</span>
+                                    <strong class="uppercase">${sale.paymentMethod}</strong>
+                                </div>
+                                ${sale.paymentMethod === 'Dinheiro' ? `
+                                    <div class="flex justify-between text-[10px] text-slate-800">
+                                        <span>VALOR RECEBIDO R$:</span>
+                                        <span>${formatCurrency(sale.received)}</span>
+                                    </div>
+                                    <div class="flex justify-between text-[10px] font-bold text-slate-950">
+                                        <span>TROCO R$:</span>
+                                        <span>${formatCurrency(sale.change)}</span>
+                                    </div>
+                                ` : ''}
+                            </div>
+
+                            <!-- Fiscal QR Code + Barcode Footer -->
+                            <div class="pt-3 text-center space-y-2">
+                                <p class="text-[9px] font-bold text-slate-700 uppercase">Consulte pela Chave de Acesso</p>
+                                <p class="text-[8px] text-slate-600 tracking-wider break-all">3126 1100 0000 0000 0100 6500 1000 00${sale.id.replace(/\D/g, '')} 1984 2210</p>
+
+                                <!-- Simulated QR Code -->
+                                <div class="w-16 h-16 mx-auto border-2 border-slate-900 p-1 bg-white flex items-center justify-center">
+                                    <i class="fa-solid fa-qrcode text-5xl text-slate-900"></i>
+                                </div>
+
+                                <!-- Simulated Barcode -->
+                                <div class="pt-1">
+                                    <div class="h-6 w-4/5 mx-auto" style="background: repeating-linear-gradient(90deg, #0f172a 0px, #0f172a 2px, transparent 2px, transparent 4px, #0f172a 4px, #0f172a 5px, transparent 5px, transparent 8px, #0f172a 8px, #0f172a 11px, transparent 11px, transparent 13px);"></div>
+                                    <p class="text-[9px] tracking-[0.18em] text-slate-700 mt-0.5">${sale.id}-${sale.date.replace(/-/g, '')}</p>
+                                </div>
+
+                                <p class="text-[9px] text-slate-600 pt-1 border-t border-dashed border-slate-400">
+                                    OBRIGADO PELA PREFERÊNCIA! VOLTE SEMPRE!<br>
+                                    Sistema PDV • TECH PEREIRA BH
+                                </p>
+                            </div>
                         </div>
-                        <div class="border-t border-slate-800 pt-2 flex justify-between font-bold text-sm text-emerald-400">
-                            <span>Total Pago (${sale.paymentMethod}):</span>
-                            <span>${formatCurrency(sale.total)}</span>
-                        </div>
-                        ${sale.paymentMethod === 'Dinheiro' ? `
-                            <div class="flex justify-between text-slate-400"><span>Recebido / Troco:</span><span>${formatCurrency(sale.received)} / ${formatCurrency(sale.change)}</span></div>
-                        ` : ''}
+
+                        <!-- Bottom Serrated Paper Edge -->
+                        <div class="receipt-zigzag-bottom"></div>
                     </div>
                 `,
+                showCancelButton: !isRefunded,
+                cancelButtonColor: '#ef4444',
+                cancelButtonText: '<i class="fa-solid fa-rotate-left mr-1"></i> Estornar',
                 confirmButtonColor: '#f59e0b',
-                confirmButtonText: 'Fechar'
+                confirmButtonText: 'Fechar Cupom'
+            }).then((res) => {
+                if (res.dismiss === Swal.DismissReason.cancel && !isRefunded) {
+                    openRefundModal(sale.id);
+                }
+            });
+        }
+
+        // ==================== REFUND / ESTORNO LOGIC ====================
+        function openRefundModal(saleId) {
+            const sale = state.sales.find(s => s.id === saleId);
+            if (!sale || sale.status === 'estornada') return;
+
+            document.getElementById('refund-sale-id').value = sale.id;
+            document.getElementById('refund-reason-preset').value = 'Lanche / Salgado estragado ou impróprio';
+            document.getElementById('refund-custom-reason').value = '';
+            document.getElementById('refund-custom-reason-box').classList.add('hidden');
+            document.querySelector('input[name="refund-stock-action"][value="discard"]').checked = true;
+
+            const itemsList = sale.items.map(i => `${i.qty}x ${i.name}`).join(', ');
+            document.getElementById('refund-sale-summary').innerHTML = `
+                <div class="flex justify-between">
+                    <span class="text-slate-400">Venda:</span>
+                    <strong class="text-white">${sale.id} (${sale.time})</strong>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-400">Pagamento Original:</span>
+                    <strong class="text-amber-400">${sale.paymentMethod}</strong>
+                </div>
+                <div class="text-slate-300 border-t border-slate-800 pt-1.5">
+                    <span class="text-slate-400 block text-[11px]">Itens:</span>
+                    <span class="font-medium">${itemsList}</span>
+                </div>
+                <div class="flex justify-between border-t border-slate-800 pt-1.5 text-sm font-extrabold text-red-400">
+                    <span>Valor a Estornar:</span>
+                    <span>${formatCurrency(sale.total)}</span>
+                </div>
+            `;
+
+            openModal('refund-modal');
+        }
+
+        function toggleCustomRefundReason() {
+            const preset = document.getElementById('refund-reason-preset').value;
+            const customBox = document.getElementById('refund-custom-reason-box');
+            if (preset === 'Outro') {
+                customBox.classList.remove('hidden');
+                document.getElementById('refund-custom-reason').focus();
+            } else {
+                customBox.classList.add('hidden');
+            }
+        }
+
+        function confirmRefund(event) {
+            event.preventDefault();
+            const saleId = document.getElementById('refund-sale-id').value;
+            const sale = state.sales.find(s => s.id === saleId);
+            if (!sale || sale.status === 'estornada') return;
+
+            const preset = document.getElementById('refund-reason-preset').value;
+            const customText = document.getElementById('refund-custom-reason').value.trim();
+            const reason = preset === 'Outro' ? (customText || 'Motivo não especificado') : preset;
+            const stockAction = document.querySelector('input[name="refund-stock-action"]:checked').value;
+
+            const user = getActiveUser();
+            const nowTime = getTimeStr();
+            const nowDate = getTodayStr();
+
+            sale.status = 'estornada';
+            sale.refundReason = reason;
+            sale.refundedBy = user.name;
+            sale.refundedAt = nowTime;
+            sale.refundDate = nowDate;
+            sale.refundStockAction = stockAction;
+
+            // Update stock or log discard movement
+            sale.items.forEach(item => {
+                const prod = state.products.find(p => p.id === item.productId);
+                if (prod) {
+                    if (stockAction === 'restock') {
+                        prod.stock += item.qty;
+                        state.stockMovements.unshift({
+                            date: nowDate,
+                            time: nowTime,
+                            product: prod.name,
+                            type: 'Estorno (Devolução)',
+                            qty: item.qty,
+                            operator: user.name
+                        });
+                    } else {
+                        state.stockMovements.unshift({
+                            date: nowDate,
+                            time: nowTime,
+                            product: prod.name,
+                            type: 'Perda / Descarte (Estorno)',
+                            qty: item.qty,
+                            operator: user.name
+                        });
+                    }
+                }
+            });
+
+            // Log in shift history
+            state.shift.history.unshift({
+                action: `Estorno (${sale.id})`,
+                amount: sale.total,
+                operator: user.name,
+                time: nowTime,
+                date: nowDate,
+                note: `${sale.paymentMethod} • ${reason}`
+            });
+
+            saveState();
+            closeModal('refund-modal');
+            refreshAllUI();
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Estorno Registrado!',
+                html: `
+                    <div class="text-left bg-slate-950 p-3.5 rounded-xl border border-slate-800 text-xs space-y-1.5 mt-2">
+                        <div class="flex justify-between"><span class="text-slate-400">Venda Estornada:</span><strong class="text-white">${sale.id}</strong></div>
+                        <div class="flex justify-between"><span class="text-slate-400">Valor Devolvido:</span><strong class="text-red-400">${formatCurrency(sale.total)} (${sale.paymentMethod})</strong></div>
+                        <div class="flex justify-between"><span class="text-slate-400">Destino Estoque:</span><span class="text-slate-200">${stockAction === 'restock' ? 'Devolvido ao estoque' : 'Perda / Descarte'}</span></div>
+                        <div class="text-slate-400 border-t border-slate-800 pt-1.5"><strong>Motivo:</strong> ${reason}</div>
+                    </div>
+                `,
+                confirmButtonColor: '#10b981',
+                confirmButtonText: 'Entendido'
             });
         }
 
@@ -2606,8 +3522,8 @@
             const grid = document.getElementById('users-grid');
             grid.innerHTML = state.users.map(u => {
                 const isActive = u.id === state.activeUserId;
-                const uSalesCount = state.sales.filter(s => s.operatorId === u.id).length;
-                const uRevenue = state.sales.filter(s => s.operatorId === u.id).reduce((acc, s) => acc + s.total, 0);
+                const uSalesCount = state.sales.filter(s => s.operatorId === u.id && s.status !== 'estornada').length;
+                const uRevenue = state.sales.filter(s => s.operatorId === u.id && s.status !== 'estornada').reduce((acc, s) => acc + s.total, 0);
 
                 return `
                     <div class="bg-slate-900 border ${isActive ? 'border-amber-500/60 ring-1 ring-amber-500/20' : 'border-slate-800'} rounded-2xl p-5 flex flex-col justify-between gap-4">
@@ -2758,10 +3674,76 @@
         }
 
         // ==================== INITIALIZATION ====================
+        function renderPDVShiftSummary() {
+            const openedDate = state.shift.openedDate || getTodayStr();
+            const openedAt = state.shift.openedAt || '08:00';
+
+            const shiftSalesAll = state.sales.filter(s => {
+                if (s.date !== openedDate) return false;
+                if (s.time && openedAt && s.time < openedAt) return false;
+                return true;
+            });
+
+            const validShiftSales = shiftSalesAll.filter(s => s.status !== 'estornada');
+
+            const sumByMethod = (method) => validShiftSales
+                .filter(s => s.paymentMethod === method)
+                .reduce((acc, s) => acc + s.total, 0);
+
+            const totalSold = validShiftSales.reduce((acc, s) => acc + s.total, 0);
+            const totalDinheiro = sumByMethod('Dinheiro');
+            const totalPix = sumByMethod('Pix');
+            const totalDebito = sumByMethod('Cartão de Débito');
+            const totalCredito = sumByMethod('Cartão de Crédito');
+
+            const labelEl = document.getElementById('pdv-shift-opened-label');
+            if (labelEl) {
+                labelEl.textContent = state.shift.isOpen
+                    ? `Aberto às ${openedAt} (${openedDate.split('-').reverse().join('/')})`
+                    : `Turno encerrado • Ref. ${openedDate.split('-').reverse().join('/')}`;
+            }
+
+            document.getElementById('pdv-shift-total-sold').textContent = formatCurrency(totalSold);
+            document.getElementById('pdv-shift-dinheiro').textContent = formatCurrency(totalDinheiro);
+            document.getElementById('pdv-shift-pix').textContent = formatCurrency(totalPix);
+            document.getElementById('pdv-shift-debito').textContent = formatCurrency(totalDebito);
+            document.getElementById('pdv-shift-credito').textContent = formatCurrency(totalCredito);
+            document.getElementById('pdv-shift-sales-count').textContent = `${validShiftSales.length} venda(s)`;
+
+            const listEl = document.getElementById('pdv-recent-sales-list');
+            if (shiftSalesAll.length === 0) {
+                listEl.innerHTML = `<p class="text-[11px] text-slate-500 text-center py-3 bg-slate-950/60 rounded-xl border border-slate-800/70">Nenhuma venda registrada desde a abertura.</p>`;
+                return;
+            }
+
+            listEl.innerHTML = shiftSalesAll.map(s => {
+                const isRefunded = s.status === 'estornada';
+                const itemsText = s.items.map(i => `${i.qty}x ${i.name}`).join(', ');
+                return `
+                    <div onclick="viewSaleReceipt('${s.id}')" title="Clique para ver o cupom" class="bg-slate-950 hover:bg-slate-800/80 border border-slate-800/90 rounded-xl px-3 py-2 flex items-center justify-between gap-2 cursor-pointer transition-colors ${isRefunded ? 'opacity-60' : ''}">
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-center gap-1.5">
+                                <span class="font-bold text-slate-200 ${isRefunded ? 'line-through' : ''}">${s.id}</span>
+                                <span class="text-[10px] text-slate-500">${s.time}</span>
+                                <span class="text-[10px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-300 font-medium">${s.paymentMethod}</span>
+                                ${isRefunded ? `<span class="text-[9px] px-1 rounded bg-red-500/20 text-red-400 font-bold uppercase">Estornada</span>` : ''}
+                            </div>
+                            <p class="text-[11px] text-slate-400 truncate mt-0.5">${itemsText}</p>
+                        </div>
+                        <div class="text-right shrink-0 flex items-center gap-2">
+                            <span class="font-extrabold text-xs ${isRefunded ? 'text-red-400 line-through' : 'text-emerald-400'}">${formatCurrency(s.total)}</span>
+                            <i class="fa-solid fa-receipt text-[11px] text-slate-500"></i>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
         function refreshAllUI() {
             updateHeaderStatus();
             renderPDVProducts();
             renderCart();
+            renderPDVShiftSummary();
             renderStockTable();
             renderReports();
             renderUsersGrid();
