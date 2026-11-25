@@ -311,8 +311,8 @@
                 </button>
             </nav>
 
-            <!-- Operator & Cash Shift Status -->
-            <div class="flex items-center gap-1 sm:gap-2 order-2 xl:order-3 shrink-0 max-w-full">
+            <!-- Operator & Cash Shift Status (Desktop only; moved to bottom icon bar on mobile) -->
+            <div class="hidden md:flex items-center gap-1 sm:gap-2 order-2 xl:order-3 shrink-0 max-w-full">
                 <!-- Quick Sangria Button (Desktop & Mobile accessible for Admin and Operators) -->
                 <button onclick="openQuickSangriaModal()" id="header-sangria-btn" class="h-8 sm:h-10 flex items-center gap-1 px-2 sm:px-3 rounded-lg sm:rounded-xl border text-[10px] sm:text-xs font-bold whitespace-nowrap transition-all bg-orange-500/10 border-orange-500/30 text-orange-400 hover:bg-orange-500 hover:text-slate-950">
                     <i class="fa-solid fa-hand-holding-dollar"></i>
@@ -903,65 +903,68 @@
                 <!-- Rendered via JS -->
             </div>
         </section>
-
     </main>
 
-    <!-- Floating Mobile Cart Bar (Appears above Bottom App Bar when items are in cart on small screens) -->
-    <div id="mobile-floating-cart" class="md:hidden hidden fixed bottom-[76px] left-3 right-3 z-[9990]">
-        <button onclick="scrollToMobileCart()" class="w-full bg-emerald-500 hover:bg-emerald-600 active:scale-[0.99] text-slate-950 rounded-2xl px-4 py-3 shadow-xl shadow-emerald-950/80 flex items-center justify-between font-extrabold transition-all">
-            <div class="flex items-center gap-2.5">
-                <span id="mobile-cart-badge" class="w-6 h-6 rounded-lg bg-slate-950 text-emerald-400 text-xs flex items-center justify-center font-black">0</span>
-                <span class="text-xs sm:text-sm">Ver Pedido Atual</span>
-            </div>
-            <div class="flex items-center gap-2">
-                <span id="mobile-cart-total" class="text-sm sm:text-base font-black">R$ 0,00</span>
-                <i class="fa-solid fa-chevron-down text-xs"></i>
-            </div>
-        </button>
-    </div>
-
-    <!-- Mobile App Bottom Navigation Bar (Role-Aware Icons) -->
+    <!-- Mobile App Bottom Navigation Bar (Icon Mode for Smartphones & iPhones) -->
     <nav id="mobile-bottom-nav" class="md:hidden fixed bottom-0 inset-x-0 z-[9999] bg-slate-900/95 backdrop-blur-lg border-t border-slate-800 pb-safe shadow-[0_-8px_25px_rgba(0,0,0,0.65)]">
-        <div id="mobile-bottom-nav-grid" class="grid grid-cols-5 h-16 max-w-lg mx-auto px-1">
-            <!-- PDV / Vender (All Roles) -->
-            <button onclick="switchTab('pdv')" id="mob-tab-pdv" class="mob-nav-btn flex flex-col items-center justify-center gap-1 text-amber-400 transition-all relative">
-                <span class="mob-nav-pill w-11 h-7 rounded-full bg-amber-500/15 flex items-center justify-center transition-all">
+        <div id="mobile-bottom-nav-grid" class="grid grid-cols-6 h-16 max-w-lg mx-auto px-1">
+            <!-- PDV / Caixa -->
+            <button onclick="switchTab('pdv')" id="mob-tab-pdv" title="Frente de Caixa" class="mob-nav-btn flex flex-col items-center justify-center gap-0.5 text-amber-400 transition-all relative">
+                <span class="mob-nav-pill w-10 h-7 rounded-xl bg-amber-500/15 flex items-center justify-center transition-all">
                     <i class="fa-solid fa-cash-register text-sm"></i>
                 </span>
-                <span class="text-[10px] font-bold leading-none">Caixa</span>
+                <span class="text-[9px] font-bold leading-none">Caixa</span>
             </button>
 
-            <!-- Sangria Rápida (All Roles) -->
-            <button onclick="openQuickSangriaModal()" id="mob-tab-sangria" class="mob-nav-btn flex flex-col items-center justify-center gap-1 text-orange-400 hover:text-orange-300 transition-all">
-                <span class="w-11 h-7 rounded-full bg-orange-500/10 flex items-center justify-center transition-all">
+            <!-- Sangria -->
+            <button onclick="openQuickSangriaModal()" id="mob-tab-sangria" title="Fazer Sangria" class="mob-nav-btn flex flex-col items-center justify-center gap-0.5 text-orange-400 hover:text-orange-300 transition-all">
+                <span class="w-10 h-7 rounded-xl bg-orange-500/10 flex items-center justify-center transition-all">
                     <i class="fa-solid fa-hand-holding-dollar text-sm"></i>
                 </span>
-                <span class="text-[10px] font-bold leading-none">Sangria</span>
+                <span class="text-[9px] font-bold leading-none">Sangria</span>
             </button>
 
-            <!-- Produtos & Estoque (Admin Only) -->
-            <button onclick="switchTab('produtos')" id="mob-tab-produtos" class="mob-nav-btn flex flex-col items-center justify-center gap-1 text-slate-400 transition-all relative">
-                <span class="mob-nav-pill w-11 h-7 rounded-full flex items-center justify-center transition-all relative">
-                    <i class="fa-solid fa-boxes-stacked text-sm"></i>
-                    <span id="mob-badge-low-stock" class="hidden absolute -top-0.5 right-1 min-w-[16px] h-4 px-1 text-[9px] font-extrabold rounded-full bg-red-500 text-white flex items-center justify-center">0</span>
+            <!-- Turno / Caixa Aberto ou Fechado -->
+            <button onclick="openShiftControlModal()" id="mob-shift-status-btn" title="Controle de Turno" class="mob-nav-btn flex flex-col items-center justify-center gap-0.5 text-emerald-400 transition-all relative">
+                <span id="mob-shift-pill" class="w-10 h-7 rounded-xl bg-emerald-500/15 flex items-center justify-center transition-all relative">
+                    <i id="mob-shift-icon" class="fa-solid fa-lock-open text-sm"></i>
+                    <span id="mob-shift-dot" class="absolute top-1 right-1.5 inline-flex rounded-full h-2 w-2 bg-emerald-500 pulse-dot"></span>
                 </span>
-                <span class="text-[10px] font-semibold leading-none">Estoque</span>
+                <span id="mob-shift-text" class="text-[9px] font-bold leading-none">Aberto</span>
             </button>
 
-            <!-- Relatórios & Fechamento (Admin Only) -->
-            <button onclick="switchTab('relatorios')" id="mob-tab-relatorios" class="mob-nav-btn flex flex-col items-center justify-center gap-1 text-slate-400 transition-all relative">
-                <span class="mob-nav-pill w-11 h-7 rounded-full flex items-center justify-center transition-all">
-                    <i class="fa-solid fa-chart-pie text-sm"></i>
+            <!-- Fluxo / Demanda (Normal ou Alta Demanda) -->
+            <div id="mob-flow-pill" title="Fluxo de movimento em tempo real" class="flex flex-col items-center justify-center gap-0.5 text-emerald-400 transition-all">
+                <span id="mob-flow-icon-wrap" class="w-10 h-7 rounded-xl bg-emerald-500/15 flex items-center justify-center transition-all relative">
+                    <i id="mob-flow-icon" class="fa-solid fa-gauge-high text-sm"></i>
+                    <span id="mob-flow-dot" class="absolute top-1 right-1.5 inline-flex rounded-full h-2 w-2 bg-emerald-500 pulse-dot"></span>
                 </span>
-                <span class="text-[10px] font-semibold leading-none">Relatórios</span>
+                <span id="mob-flow-text" class="text-[9px] font-bold leading-none">Normal</span>
+            </div>
+
+            <!-- Admin Quick Drawer (Estoque / Relatórios / Equipe) - Admin Only -->
+            <button onclick="openAdminMobileMenuSheet()" id="mob-tab-admin-menu" title="Gestão do Gerente" class="hidden mob-nav-btn flex flex-col items-center justify-center gap-0.5 text-slate-300 hover:text-amber-400 transition-all relative">
+                <span class="w-10 h-7 rounded-xl bg-slate-800 flex items-center justify-center transition-all relative">
+                    <i class="fa-solid fa-grid-2 text-sm"></i>
+                    <span id="mob-badge-low-stock" class="hidden absolute -top-1 -right-1 min-w-[15px] h-3.5 px-1 text-[8px] font-extrabold rounded-full bg-red-500 text-white flex items-center justify-center">0</span>
+                </span>
+                <span class="text-[9px] font-bold leading-none">Gestão</span>
             </button>
 
-            <!-- Equipe & Usuários (Admin Only) -->
-            <button onclick="switchTab('usuarios')" id="mob-tab-usuarios" class="mob-nav-btn flex flex-col items-center justify-center gap-1 text-slate-400 transition-all relative">
-                <span class="mob-nav-pill w-11 h-7 rounded-full flex items-center justify-center transition-all">
-                    <i class="fa-solid fa-users-gear text-sm"></i>
+            <!-- Usuário Ativo / Trocar -->
+            <button onclick="openLoginModal()" id="mob-user-btn" title="Trocar Usuário" class="mob-nav-btn flex flex-col items-center justify-center gap-0.5 text-slate-300 hover:text-amber-400 transition-all">
+                <span class="w-10 h-7 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-amber-400 text-[10px] font-extrabold">
+                    <span id="mob-active-user-avatar">AD</span>
                 </span>
-                <span class="text-[10px] font-semibold leading-none">Equipe</span>
+                <span class="text-[9px] font-bold leading-none">Conta</span>
+            </button>
+
+            <!-- Sair -->
+            <button type="button" onclick="logoutToLoginScreen()" title="Sair para tela de login" class="mob-nav-btn flex flex-col items-center justify-center gap-0.5 text-red-400 hover:text-red-300 transition-all">
+                <span class="w-10 h-7 rounded-xl bg-red-500/15 flex items-center justify-center transition-all">
+                    <i class="fa-solid fa-right-from-bracket text-sm"></i>
+                </span>
+                <span class="text-[9px] font-bold leading-none">Sair</span>
             </button>
         </div>
     </nav>
@@ -1426,35 +1429,51 @@
             const active = getActiveUser();
             const isAdmin = active.role === 'Administrador';
 
+            const initials = active.name.split(' ').map(x => x[0]).join('').slice(0, 2).toUpperCase();
             const avatarEl = document.getElementById('active-user-avatar');
+            const mobAvatarEl = document.getElementById('mob-active-user-avatar');
             const nameEl = document.getElementById('active-user-name');
             const roleEl = document.getElementById('active-user-role');
-            if (avatarEl) avatarEl.textContent = active.name.split(' ').map(x => x[0]).join('').slice(0, 2).toUpperCase();
+            if (avatarEl) avatarEl.textContent = initials;
+            if (mobAvatarEl) mobAvatarEl.textContent = initials;
             if (nameEl) nameEl.textContent = active.name;
             if (roleEl) roleEl.textContent = `${active.role} • Trocar`;
 
             // Show/hide admin-only tabs
             ['produtos', 'relatorios', 'usuarios'].forEach(t => {
                 const desk = document.getElementById(`tab-${t}`);
-                const mob = document.getElementById(`mob-tab-${t}`);
                 if (desk) desk.classList.toggle('hidden', !isAdmin);
-                if (mob) mob.classList.toggle('hidden', !isAdmin);
             });
+
+            const mobAdminBtn = document.getElementById('mob-tab-admin-menu');
+            if (mobAdminBtn) mobAdminBtn.classList.toggle('hidden', !isAdmin);
 
             const mobGrid = document.getElementById('mobile-bottom-nav-grid');
             if (mobGrid) {
-                mobGrid.className = isAdmin ? 'grid grid-cols-5 h-16 max-w-lg mx-auto px-1' : 'grid grid-cols-2 h-16 max-w-lg mx-auto px-1';
+                mobGrid.className = isAdmin ? 'grid grid-cols-7 h-16 max-w-lg mx-auto px-1' : 'grid grid-cols-6 h-16 max-w-lg mx-auto px-1';
             }
 
-            // Shift badge in header
+            // Shift badge in header & mobile bottom icon bar
             const shiftBtn = document.getElementById('shift-status-btn');
             const shiftText = document.getElementById('shift-status-text');
             const shiftDot = document.getElementById('shift-dot');
+            const mobShiftBtn = document.getElementById('mob-shift-status-btn');
+            const mobShiftPill = document.getElementById('mob-shift-pill');
+            const mobShiftIcon = document.getElementById('mob-shift-icon');
+            const mobShiftDot = document.getElementById('mob-shift-dot');
+            const mobShiftText = document.getElementById('mob-shift-text');
+
             if (isAdmin) {
                 const openCount = state.users.filter(u => u.role !== 'Administrador' && getUserShift(u.id).isOpen).length;
                 if (shiftText) shiftText.textContent = `${openCount} Caixa(s) Ativo(s)`;
                 if (shiftBtn) shiftBtn.className = 'h-8 sm:h-10 flex items-center gap-1 sm:gap-2 px-2 sm:px-3 rounded-lg sm:rounded-xl border text-[10px] sm:text-xs font-semibold whitespace-nowrap transition-all bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20';
                 if (shiftDot) shiftDot.className = 'relative inline-flex rounded-full h-2 w-2 sm:h-2.5 sm:w-2.5 bg-emerald-500 pulse-dot';
+
+                if (mobShiftBtn) mobShiftBtn.className = 'mob-nav-btn flex flex-col items-center justify-center gap-0.5 text-emerald-400 transition-all relative';
+                if (mobShiftPill) mobShiftPill.className = 'w-10 h-7 rounded-xl bg-emerald-500/15 flex items-center justify-center transition-all relative';
+                if (mobShiftIcon) mobShiftIcon.className = 'fa-solid fa-cash-register text-sm';
+                if (mobShiftDot) mobShiftDot.className = 'absolute top-1 right-1.5 inline-flex rounded-full h-2 w-2 bg-emerald-500 pulse-dot';
+                if (mobShiftText) mobShiftText.textContent = `${openCount} Ativo`;
             } else {
                 const sh = getUserShift(active.id);
                 if (shiftText) shiftText.textContent = sh.isOpen ? 'Caixa Aberto' : 'Caixa Fechado';
@@ -1468,9 +1487,15 @@
                         ? 'relative inline-flex rounded-full h-2 w-2 sm:h-2.5 sm:w-2.5 bg-emerald-500 pulse-dot'
                         : 'relative inline-flex rounded-full h-2 w-2 sm:h-2.5 sm:w-2.5 bg-red-500';
                 }
+
+                if (mobShiftBtn) mobShiftBtn.className = `mob-nav-btn flex flex-col items-center justify-center gap-0.5 ${sh.isOpen ? 'text-emerald-400' : 'text-red-400'} transition-all relative`;
+                if (mobShiftPill) mobShiftPill.className = `w-10 h-7 rounded-xl ${sh.isOpen ? 'bg-emerald-500/15' : 'bg-red-500/15'} flex items-center justify-center transition-all relative`;
+                if (mobShiftIcon) mobShiftIcon.className = `fa-solid ${sh.isOpen ? 'fa-lock-open' : 'fa-lock'} text-sm`;
+                if (mobShiftDot) mobShiftDot.className = `absolute top-1 right-1.5 inline-flex rounded-full h-2 w-2 ${sh.isOpen ? 'bg-emerald-500 pulse-dot' : 'bg-red-500'}`;
+                if (mobShiftText) mobShiftText.textContent = sh.isOpen ? 'Aberto' : 'Fechado';
             }
 
-            // PDV layout layout split: Admin vs Operator
+            // PDV layout split: Admin vs Operator
             const leftCat = document.getElementById('pdv-left-catalog');
             const rightCol = document.getElementById('pdv-right-column');
             const adminMon = document.getElementById('pdv-admin-monitor-panel');
@@ -1516,35 +1541,75 @@
             if (loginEl) loginEl.classList.remove('hidden');
         }
 
-        function logoutToLoginScreen() {
-            isSessionAuthenticated = false;
-            cart = [];
-            adminInspectOperatorId = null;
-            openLoginModal();
+        function openAdminMobileMenuSheet() {
+            const active = getActiveUser();
+            if (!active || active.role !== 'Administrador') return;
+            const lowCount = state.products.filter(p => p.stock <= p.minStock).length;
+
+            Swal.fire({
+                title: 'Painel Gerencial',
+                html: `
+                    <div class="grid grid-cols-1 gap-2.5 mt-2 text-left text-xs">
+                        <button type="button" onclick="Swal.close(); switchTab('pdv');" class="w-full p-3.5 rounded-2xl bg-slate-950 border border-slate-800 hover:border-amber-500 flex items-center gap-3 text-white font-bold">
+                            <span class="w-9 h-9 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center"><i class="fa-solid fa-cash-register"></i></span>
+                            <span>Monitoramento ao Vivo (Caixa)</span>
+                        </button>
+                        <button type="button" onclick="Swal.close(); switchTab('produtos');" class="w-full p-3.5 rounded-2xl bg-slate-950 border border-slate-800 hover:border-amber-500 flex items-center justify-between text-white font-bold">
+                            <span class="flex items-center gap-3">
+                                <span class="w-9 h-9 rounded-xl bg-blue-500/15 text-blue-400 flex items-center justify-center"><i class="fa-solid fa-boxes-stacked"></i></span>
+                                <span>Produtos & Estoque</span>
+                            </span>
+                            ${lowCount > 0 ? `<span class="px-2 py-0.5 rounded-full bg-red-500 text-white text-[10px] font-extrabold">${lowCount}</span>` : ''}
+                        </button>
+                        <button type="button" onclick="Swal.close(); switchTab('relatorios');" class="w-full p-3.5 rounded-2xl bg-slate-950 border border-slate-800 hover:border-amber-500 flex items-center gap-3 text-white font-bold">
+                            <span class="w-9 h-9 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center"><i class="fa-solid fa-chart-pie"></i></span>
+                            <span>Caixa & Relatórios (PDF)</span>
+                        </button>
+                        <button type="button" onclick="Swal.close(); switchTab('usuarios');" class="w-full p-3.5 rounded-2xl bg-slate-950 border border-slate-800 hover:border-amber-500 flex items-center gap-3 text-white font-bold">
+                            <span class="w-9 h-9 rounded-xl bg-purple-500/15 text-purple-400 flex items-center justify-center"><i class="fa-solid fa-users-gear"></i></span>
+                            <span>Equipe, Horários & Pix</span>
+                        </button>
+                    </div>
+                `,
+                showConfirmButton: false,
+                showCancelButton: true,
+                cancelButtonText: 'Fechar'
+            });
         }
 
+        // ==================== LOGIN SCREEN & USER SESSION ====================
         function renderLoginScreen() {
             const listEl = document.getElementById('login-screen-users-list');
             if (!listEl) return;
 
-            listEl.innerHTML = state.users.map(u => {
+            listEl.innerHTML = (state.users || []).map(u => {
                 const access = getUserAccessStatus(u);
-                const initials = u.name.split(' ').map(x => x[0]).join('').slice(0, 2).toUpperCase();
+                const isBlocked = !!u.blocked;
                 const isAdmin = u.role === 'Administrador';
+                const initials = u.name.split(' ').map(x => x[0]).join('').slice(0, 2).toUpperCase();
+                const scheduleText = isAdmin
+                    ? 'Administrador • Acesso Total'
+                    : (u.scheduleEnabled ? `Operador de Caixa • ${u.workStart} às ${u.workEnd}` : 'Operador de Caixa • Horário Livre');
+
+                let badgeHtml = `<span class="px-3 py-1.5 rounded-xl bg-emerald-500/15 text-emerald-400 font-bold text-xs shrink-0">Entrar →</span>`;
+                if (isBlocked) {
+                    badgeHtml = `<span class="px-3 py-1.5 rounded-xl bg-red-500/20 text-red-400 font-bold text-xs shrink-0">Bloqueado</span>`;
+                } else if (!access.allowed) {
+                    badgeHtml = `<span class="px-3 py-1.5 rounded-xl bg-red-500/15 text-red-400 font-bold text-xs shrink-0">Fora do Horário</span>`;
+                }
+
                 return `
-                    <button type="button" onclick="loginWithAuthorizedUser('${u.id}')" class="w-full p-3.5 rounded-2xl border ${!access.allowed ? 'border-red-500/35 bg-slate-950/60 opacity-80' : 'border-slate-800 hover:border-amber-500/70 bg-slate-950 hover:bg-slate-800/80'} flex items-center justify-between gap-3 text-left transition-all active:scale-[0.99]">
+                    <button type="button" onclick="loginWithAuthorizedUser('${u.id}')" class="w-full p-3.5 rounded-2xl bg-slate-950 hover:bg-slate-800/90 border ${!access.allowed ? 'border-red-500/40' : 'border-slate-800 hover:border-amber-500/50'} flex items-center justify-between gap-3 text-left transition-all">
                         <div class="flex items-center gap-3 min-w-0">
-                            <div class="w-11 h-11 rounded-xl ${!access.allowed ? 'bg-red-500/15 text-red-400' : (isAdmin ? 'bg-purple-500/15 text-purple-300' : 'bg-amber-500/15 text-amber-400')} font-extrabold text-sm flex items-center justify-center shrink-0">
+                            <div class="w-10 h-10 rounded-xl ${!access.allowed ? 'bg-red-500/15 text-red-400' : (isAdmin ? 'bg-purple-500/20 text-purple-300' : 'bg-amber-500/15 text-amber-400')} font-extrabold text-sm flex items-center justify-center shrink-0">
                                 ${!access.allowed ? '<i class="fa-solid fa-user-lock"></i>' : initials}
                             </div>
                             <div class="min-w-0">
-                                <p class="font-bold text-sm text-white truncate">${u.name}</p>
-                                <p class="text-xs text-slate-400 truncate">${u.role}${u.scheduleEnabled && !isAdmin ? ` • ${u.workStart} às ${u.workEnd}` : ''}</p>
+                                <h4 class="font-bold text-sm text-white truncate">${u.name}</h4>
+                                <p class="text-[11px] text-slate-400 truncate">${scheduleText}</p>
                             </div>
                         </div>
-                        <span class="px-3 py-1.5 rounded-xl text-xs font-extrabold shrink-0 ${!access.allowed ? 'bg-red-500/15 text-red-400' : 'bg-emerald-500/15 text-emerald-400'}">
-                            ${!access.allowed ? (u.blocked ? 'Bloqueado' : 'Fora do Horário') : 'Entrar →'}
-                        </span>
+                        ${badgeHtml}
                     </button>
                 `;
             }).join('');
@@ -1553,39 +1618,35 @@
         function loginWithAuthorizedUser(userId) {
             const target = state.users.find(u => u.id === userId);
             if (!target) return;
+
             const access = getUserAccessStatus(target);
             if (!access.allowed) {
-                const isBlocked = !!target.blocked;
                 const nowTime = getNowBrasiliaFormatted(true);
+                const isBlocked = !!target.blocked;
                 Swal.fire({
                     width: '400px',
                     padding: '0',
                     background: 'transparent',
                     showConfirmButton: false,
                     html: `
-                        <div class="bg-slate-900 border ${isBlocked ? 'border-red-500/40' : 'border-amber-500/40'} rounded-3xl p-6 text-center space-y-4 shadow-2xl">
+                        <div class="bg-slate-900 border ${isBlocked ? 'border-red-500/50' : 'border-amber-500/50'} rounded-3xl p-6 text-center space-y-4 shadow-2xl">
                             <div class="w-14 h-14 rounded-2xl ${isBlocked ? 'bg-red-500/15 text-red-400 border border-red-500/30' : 'bg-amber-500/15 text-amber-400 border border-amber-500/30'} flex items-center justify-center text-2xl mx-auto">
-                                <i class="fa-solid ${isBlocked ? 'fa-user-lock' : 'fa-clock'}"></i>
+                                <i class="fa-solid ${isBlocked ? 'fa-lock' : 'fa-clock'}"></i>
                             </div>
                             <div class="space-y-1">
                                 <span class="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${isBlocked ? 'bg-red-500/15 text-red-400' : 'bg-amber-500/15 text-amber-400'}">
-                                    ${isBlocked ? 'Acesso Restrito' : 'Fora do Turno'}
+                                    ${isBlocked ? 'Acesso Restrito' : 'Fora do Horário de Trabalho'}
                                 </span>
-                                <h3 class="text-lg font-extrabold text-white pt-1">
-                                    ${isBlocked ? 'Acesso Bloqueado' : 'Fora do Horário de Trabalho'}
-                                </h3>
-                                <p class="text-xs text-slate-400">${target.name} • ${target.role}</p>
+                                <h3 class="text-lg font-extrabold text-white pt-1">${target.name}</h3>
+                                <p class="text-xs text-slate-300 leading-relaxed">${access.reason}</p>
                             </div>
-                            <div class="bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-xs space-y-2">
-                                <p class="text-slate-200 font-medium">${access.reason}</p>
-                                ${!isBlocked && target.scheduleEnabled ? `
-                                    <div class="flex items-center justify-between pt-2 border-t border-slate-800/80 text-[11px] text-slate-400">
-                                        <span>Horário atual: <strong class="text-slate-200">${nowTime}</strong></span>
-                                        <span>Turno: <strong class="text-amber-400">${target.workStart} às ${target.workEnd}</strong></span>
-                                    </div>
-                                ` : ''}
-                            </div>
-                            <button type="button" onclick="Swal.close()" class="w-full py-2.5 rounded-xl ${isBlocked ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-amber-500 hover:bg-amber-600 text-slate-950'} font-extrabold text-xs transition-all shadow-lg">
+                            ${!isBlocked ? `
+                                <div class="bg-slate-950 border border-slate-800 rounded-2xl p-3 text-xs flex items-center justify-between">
+                                    <span class="text-slate-400">Horário atual (BRT):</span>
+                                    <strong class="text-white">${nowTime}</strong>
+                                </div>
+                            ` : ''}
+                            <button type="button" onclick="Swal.close()" class="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-xs transition-all">
                                 Entendi
                             </button>
                         </div>
@@ -1593,29 +1654,31 @@
                 });
                 return;
             }
-            state.activeUserId = userId;
-            isSessionAuthenticated = true;
-            adminInspectOperatorId = null;
-            cart = [];
-            const searchEl = document.getElementById('pdv-search');
-            if (searchEl) searchEl.value = '';
-            saveState();
 
+            switchActiveUser(userId);
             const loginEl = document.getElementById('login-screen');
             if (loginEl) loginEl.classList.add('hidden');
-
-            switchTab('pdv');
-            refreshAllUI();
-            setTimeout(() => {
-                checkOperatorNotifications();
-            }, 250);
         }
 
         function switchActiveUser(userId) {
-            loginWithAuthorizedUser(userId);
+            state.activeUserId = userId;
+            isSessionAuthenticated = true;
+            cart = [];
+            adminInspectOperatorId = null;
+            saveState();
+            switchTab('pdv');
+            refreshAllUI();
+            setTimeout(() => checkOperatorNotifications(), 200);
         }
 
-        // ==================== PDV PRODUCTS, CART & CHECKOUT ====================
+        function logoutToLoginScreen() {
+            isSessionAuthenticated = false;
+            cart = [];
+            adminInspectOperatorId = null;
+            openLoginModal();
+        }
+
+        // ==================== PDV CATALOG, CART & CHECKOUT ====================
         function setCategory(cat) {
             selectedCategory = cat;
             document.querySelectorAll('.cat-pill').forEach(btn => {
@@ -1630,36 +1693,42 @@
         function toggleCriticalFilter() {
             filterCriticalOnly = !filterCriticalOnly;
             const btn = document.getElementById('btn-filter-critical');
-            if (btn) btn.textContent = filterCriticalOnly ? 'Mostrar Todos' : 'Ver Apenas Críticos';
+            if (btn) {
+                btn.textContent = filterCriticalOnly ? 'Mostrar Todos' : 'Ver Apenas Críticos';
+            }
             renderPDVProducts();
         }
 
         function renderPDVProducts() {
             const active = getActiveUser();
-            if (active.role === 'Administrador') return;
-
+            const isAdmin = active && active.role === 'Administrador';
             const shift = getUserShift(active.id);
-            const closedBanner = document.getElementById('closed-register-banner');
-            if (closedBanner) closedBanner.classList.toggle('hidden', shift.isOpen);
 
-            const critProducts = state.products.filter(p => p.stock <= p.minStock);
-            const critBanner = document.getElementById('pdv-critical-banner');
-            if (critBanner) {
-                critBanner.classList.toggle('hidden', critProducts.length === 0);
-                const sub = document.getElementById('pdv-critical-subtitle');
-                if (sub) sub.textContent = `${critProducts.length} item(ns) com estoque baixo ou esgotado.`;
+            const closedBanner = document.getElementById('closed-register-banner');
+            if (closedBanner) {
+                closedBanner.classList.toggle('hidden', isAdmin || shift.isOpen);
             }
 
+            const criticalItems = (state.products || []).filter(p => p.stock <= p.minStock);
+            const critBanner = document.getElementById('pdv-critical-banner');
+            const critTitle = document.getElementById('pdv-critical-title');
+            const critSub = document.getElementById('pdv-critical-subtitle');
+            if (critBanner) {
+                critBanner.classList.toggle('hidden', criticalItems.length === 0);
+                if (critTitle) critTitle.textContent = `Alerta de Estoque Crítico (${criticalItems.length} item(ns))`;
+                if (critSub) critSub.textContent = criticalItems.map(p => `${p.name} (${p.stock} un.)`).slice(0, 3).join(' • ');
+            }
+
+            const grid = document.getElementById('pdv-product-grid');
+            if (!grid) return;
+
             const query = (document.getElementById('pdv-search')?.value || '').toLowerCase().trim();
-            const filtered = state.products.filter(p => {
+            const filtered = (state.products || []).filter(p => {
                 if (filterCriticalOnly && p.stock > p.minStock) return false;
                 if (selectedCategory !== 'Todos' && p.category !== selectedCategory) return false;
                 if (query && !p.name.toLowerCase().includes(query) && !p.category.toLowerCase().includes(query)) return false;
                 return true;
             });
-
-            const grid = document.getElementById('pdv-product-grid');
-            if (!grid) return;
 
             if (filtered.length === 0) {
                 grid.innerHTML = `<div class="col-span-full bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center text-xs text-slate-400">Nenhum produto encontrado para este filtro.</div>`;
@@ -1668,24 +1737,30 @@
 
             grid.innerHTML = filtered.map(p => {
                 const isOut = p.stock <= 0;
-                const isLow = p.stock > 0 && p.stock <= p.minStock;
+                const isCritical = !isOut && p.stock <= p.minStock;
+                const inCart = cart.find(c => c.id === p.id);
+                const qtyBadge = inCart ? `<span class="px-2 py-0.5 rounded-full bg-amber-500 text-slate-950 font-extrabold text-[10px]">${inCart.qty}x</span>` : '';
+
                 return `
-                    <button type="button" onclick="addToCart('${p.id}')" ${isOut || !shift.isOpen ? 'disabled' : ''} class="text-left bg-slate-900 border ${isLow ? 'border-amber-500/50' : 'border-slate-800 hover:border-amber-500/60'} disabled:opacity-50 rounded-2xl p-3.5 flex flex-col justify-between gap-3 transition-all active:scale-[0.98]">
+                    <button type="button" onclick="addToCart('${p.id}')" ${isOut ? 'disabled' : ''} class="text-left bg-slate-900 hover:bg-slate-850 disabled:opacity-50 border ${isCritical ? 'border-amber-500/60 critical-stock-card' : 'border-slate-800 hover:border-amber-500/50'} rounded-2xl p-3.5 flex flex-col justify-between gap-3 transition-all active:scale-[0.98]">
                         <div class="flex items-start justify-between gap-2">
-                            <div class="w-9 h-9 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center text-base shrink-0">
+                            <div class="w-9 h-9 rounded-xl ${isOut ? 'bg-red-500/15 text-red-400' : 'bg-amber-500/15 text-amber-400'} flex items-center justify-center text-sm shrink-0">
                                 <i class="fa-solid ${p.icon || 'fa-utensils'}"></i>
                             </div>
-                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${isOut ? 'bg-red-500/20 text-red-400' : (isLow ? 'bg-amber-500/20 text-amber-400' : 'bg-slate-800 text-slate-300')}">
-                                ${isOut ? 'Esgotado' : `${p.stock} un.`}
-                            </span>
+                            <div class="flex items-center gap-1">
+                                ${qtyBadge}
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${isOut ? 'bg-red-500/20 text-red-400' : (isCritical ? 'bg-amber-500/20 text-amber-400' : 'bg-slate-800 text-slate-400')}">
+                                    ${isOut ? 'Esgotado' : `${p.stock} un.`}
+                                </span>
+                            </div>
                         </div>
                         <div>
-                            <span class="text-[10px] text-slate-400 block">${p.category}</span>
-                            <h4 class="font-bold text-xs sm:text-sm text-white line-clamp-2 mt-0.5">${p.name}</h4>
+                            <span class="text-[10px] font-semibold text-slate-500 block">${p.category}</span>
+                            <h4 class="font-bold text-xs sm:text-sm text-white line-clamp-2 leading-snug mt-0.5">${p.name}</h4>
                         </div>
                         <div class="flex items-center justify-between pt-2 border-t border-slate-800/80">
                             <strong class="text-sm sm:text-base font-extrabold text-emerald-400">${formatBRL(p.price)}</strong>
-                            <span class="w-7 h-7 rounded-lg bg-amber-500 text-slate-950 flex items-center justify-center text-xs font-bold">
+                            <span class="w-7 h-7 rounded-lg bg-amber-500/15 text-amber-400 flex items-center justify-center text-xs font-bold">
                                 <i class="fa-solid fa-plus"></i>
                             </span>
                         </div>
@@ -1694,91 +1769,101 @@
             }).join('');
         }
 
-        function addToCart(productId) {
+        function addToCart(prodId) {
             const active = getActiveUser();
-            if (active.role === 'Administrador') return;
-            const shift = getUserShift(active.id);
-            if (!shift.isOpen) {
-                Swal.fire({ icon: 'warning', title: 'Caixa Fechado', text: 'Abra o caixa antes de registrar vendas.' });
-                return;
+            if (active.role !== 'Administrador') {
+                const shift = getUserShift(active.id);
+                if (!shift.isOpen) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Caixa Fechado',
+                        text: 'Abra o turno informando o fundo de troco antes de registrar vendas.',
+                        confirmButtonText: 'Abrir Caixa'
+                    }).then(res => {
+                        if (res.isConfirmed) openShiftControlModal();
+                    });
+                    return;
+                }
             }
-            const prod = state.products.find(p => p.id === productId);
+
+            const prod = state.products.find(p => p.id === prodId);
             if (!prod || prod.stock <= 0) return;
 
-            const existing = cart.find(c => c.id === productId);
+            const existing = cart.find(c => c.id === prodId);
             if (existing) {
                 if (existing.qty >= prod.stock) {
-                    Swal.fire({ toast: true, position: 'top-end', icon: 'warning', title: 'Estoque máximo atingido', timer: 1500, showConfirmButton: false });
+                    Swal.fire({ toast: true, position: 'top-end', icon: 'warning', title: 'Limite de estoque atingido!', timer: 1400, showConfirmButton: false });
                     return;
                 }
                 existing.qty += 1;
             } else {
                 cart.push({ id: prod.id, name: prod.name, price: prod.price, qty: 1 });
             }
+
+            renderPDVProducts();
             renderCart();
         }
 
-        function updateCartQty(productId, delta) {
-            const idx = cart.findIndex(c => c.id === productId);
+        function updateCartQty(prodId, delta) {
+            const idx = cart.findIndex(c => c.id === prodId);
             if (idx === -1) return;
-            const prod = state.products.find(p => p.id === productId);
+            const prod = state.products.find(p => p.id === prodId);
             const nextQty = cart[idx].qty + delta;
             if (nextQty <= 0) {
                 cart.splice(idx, 1);
             } else if (!prod || nextQty <= prod.stock) {
                 cart[idx].qty = nextQty;
             }
+            renderPDVProducts();
             renderCart();
         }
 
         function clearCart() {
             cart = [];
+            renderPDVProducts();
             renderCart();
         }
 
-        function scrollToMobileCart() {
-            const el = document.getElementById('current-order-card');
-            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-
         function renderCart() {
-            const card = document.getElementById('current-order-card');
-            const container = document.getElementById('cart-items-container');
+            const cardEl = document.getElementById('current-order-card');
+            const itemsContainer = document.getElementById('cart-items-container');
             const totalItemsEl = document.getElementById('cart-total-items');
             const totalValEl = document.getElementById('cart-total-value');
-            const btnCheckout = document.getElementById('btn-checkout');
-            const mobBar = document.getElementById('mobile-floating-cart');
+            const checkoutBtn = document.getElementById('btn-checkout');
 
-            const totalQty = cart.reduce((a, b) => a + b.qty, 0);
-            const totalVal = cart.reduce((a, b) => a + b.price * b.qty, 0);
+            if (!cardEl || !itemsContainer) return;
 
-            if (card) {
-                card.classList.toggle('hidden', cart.length === 0);
-                card.classList.toggle('flex', cart.length > 0);
-            }
-            if (mobBar) {
-                mobBar.classList.toggle('hidden', cart.length === 0 || currentTab !== 'pdv');
-                const mb = document.getElementById('mobile-cart-badge');
-                const mt = document.getElementById('mobile-cart-total');
-                if (mb) mb.textContent = totalQty;
-                if (mt) mt.textContent = formatBRL(totalVal);
+            if (cart.length === 0) {
+                cardEl.classList.add('hidden');
+                cardEl.classList.remove('flex');
+                if (checkoutBtn) checkoutBtn.disabled = true;
+                return;
             }
 
-            if (totalItemsEl) totalItemsEl.textContent = `${totalQty} un.`;
-            if (totalValEl) totalValEl.textContent = formatBRL(totalVal);
-            if (btnCheckout) btnCheckout.disabled = cart.length === 0;
+            cardEl.classList.remove('hidden');
+            cardEl.classList.add('flex');
+            if (checkoutBtn) checkoutBtn.disabled = false;
 
-            if (!container) return;
-            container.innerHTML = cart.map(item => `
+            const totalUnits = cart.reduce((acc, item) => acc + item.qty, 0);
+            const totalPrice = cart.reduce((acc, item) => acc + item.price * item.qty, 0);
+
+            if (totalItemsEl) totalItemsEl.textContent = `${totalUnits} un.`;
+            if (totalValEl) totalValEl.textContent = formatBRL(totalPrice);
+
+            itemsContainer.innerHTML = cart.map(item => `
                 <div class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 flex items-center justify-between gap-2">
                     <div class="min-w-0">
                         <p class="font-bold text-xs text-white truncate">${item.name}</p>
-                        <p class="text-[11px] text-emerald-400 font-semibold">${formatBRL(item.price * item.qty)}</p>
+                        <span class="text-[11px] text-emerald-400 font-semibold">${formatBRL(item.price * item.qty)}</span>
                     </div>
                     <div class="flex items-center gap-1.5 shrink-0">
-                        <button type="button" onclick="updateCartQty('${item.id}', -1)" class="w-7 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs">-</button>
+                        <button type="button" onclick="updateCartQty('${item.id}', -1)" class="w-7 h-7 rounded-lg bg-slate-800 hover:bg-red-500/20 text-slate-300 hover:text-red-400 font-bold text-xs flex items-center justify-center">
+                            <i class="fa-solid fa-minus"></i>
+                        </button>
                         <span class="w-6 text-center text-xs font-extrabold text-white">${item.qty}</span>
-                        <button type="button" onclick="updateCartQty('${item.id}', 1)" class="w-7 h-7 rounded-lg bg-amber-500 text-slate-950 font-bold text-xs">+</button>
+                        <button type="button" onclick="updateCartQty('${item.id}', 1)" class="w-7 h-7 rounded-lg bg-slate-800 hover:bg-emerald-500/20 text-slate-300 hover:text-emerald-400 font-bold text-xs flex items-center justify-center">
+                            <i class="fa-solid fa-plus"></i>
+                        </button>
                     </div>
                 </div>
             `).join('');
@@ -1786,60 +1871,58 @@
 
         function openCheckoutModal() {
             if (cart.length === 0) return;
-            const total = cart.reduce((a, b) => a + b.price * b.qty, 0);
-            const disp = document.getElementById('checkout-total-display');
-            if (disp) disp.textContent = formatBRL(total);
+            const total = Number(cart.reduce((a, b) => a + b.price * b.qty, 0).toFixed(2));
+            const totalDisplay = document.getElementById('checkout-total-display');
+            if (totalDisplay) totalDisplay.textContent = formatBRL(total);
+
             cashReceivedAmount = 0;
             selectPaymentMethod('Dinheiro', false);
-            calculateCashChange();
             openModal('checkout-modal');
         }
 
-        function selectPaymentMethod(method, triggerCashModal = true) {
+        function selectPaymentMethod(method, promptCashModal = true) {
             selectedPaymentMethod = method;
             document.querySelectorAll('.pay-method-btn').forEach(btn => {
-                const active = btn.getAttribute('data-pay') === method;
-                btn.className = active
+                const isSel = btn.getAttribute('data-pay') === method;
+                btn.className = isSel
                     ? 'pay-method-btn py-2.5 px-3 rounded-xl border border-emerald-500 bg-emerald-500/15 text-emerald-300 font-bold text-xs flex items-center justify-center gap-2 transition-all'
                     : 'pay-method-btn py-2.5 px-3 rounded-xl border border-slate-700 bg-slate-950 text-slate-300 font-bold text-xs flex items-center justify-center gap-2 transition-all';
             });
+
             const cashSec = document.getElementById('cash-change-section');
-            if (cashSec) cashSec.classList.toggle('hidden', method !== 'Dinheiro');
-
             const pixSec = document.getElementById('pix-qrcode-section');
-            if (pixSec) {
-                pixSec.classList.toggle('hidden', method !== 'Pix');
-                if (method === 'Pix') {
-                    renderCheckoutPixQRCode();
-                }
-            }
+            if (cashSec) cashSec.classList.toggle('hidden', method !== 'Dinheiro');
+            if (pixSec) pixSec.classList.toggle('hidden', method !== 'Pix');
 
-            if (method === 'Dinheiro' && triggerCashModal) {
-                openCashReceivedModal();
+            if (method === 'Pix') {
+                renderCheckoutPixQRCode();
+            } else if (method === 'Dinheiro') {
+                calculateCashChange();
+                if (promptCashModal) {
+                    openCashReceivedModal();
+                }
             }
         }
 
         function openCashReceivedModal() {
             const total = Number(cart.reduce((a, b) => a + b.price * b.qty, 0).toFixed(2));
-            if (total <= 0) return;
-
-            const quickBills = [total, 10, 20, 50, 100].filter((v, idx, arr) => v >= total && arr.indexOf(v) === idx);
+            const suggestions = [total, 10, 20, 50, 100].filter((v, idx, arr) => v >= total && arr.indexOf(v) === idx).slice(0, 4);
 
             Swal.fire({
                 title: 'Pagamento em Dinheiro',
                 html: `
                     <div class="text-left space-y-3 mt-2 text-xs">
                         <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 flex items-center justify-between">
-                            <span class="text-slate-400 font-semibold">Total da Compra:</span>
+                            <span class="text-slate-400">Total da Compra:</span>
                             <strong class="text-lg font-extrabold text-emerald-400">${formatBRL(total)}</strong>
                         </div>
                         <div>
-                            <label class="block font-semibold text-slate-300 mb-1.5">Valor Recebido do Cliente (R$)</label>
-                            <input type="number" step="0.01" min="${total}" id="modal-cash-received-inp" value="${cashReceivedAmount > 0 ? cashReceivedAmount.toFixed(2) : ''}" placeholder="0,00" class="swal2-input w-full !m-0 text-right !text-lg !font-extrabold">
+                            <label class="block font-semibold text-slate-300 mb-1">Valor Recebido do Cliente (R$)</label>
+                            <input type="number" step="0.01" min="${total}" id="swal-cash-received-inp" value="${cashReceivedAmount >= total ? cashReceivedAmount.toFixed(2) : total.toFixed(2)}" class="swal2-input w-full !m-0 text-lg font-extrabold">
                         </div>
-                        <div class="flex flex-wrap gap-1.5 pt-1">
-                            ${quickBills.map(val => `
-                                <button type="button" onclick="document.getElementById('modal-cash-received-inp').value='${val.toFixed(2)}'" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-emerald-500 text-slate-200 hover:text-slate-950 font-bold text-[11px] transition-all">
+                        <div class="flex flex-wrap gap-1.5">
+                            ${suggestions.map(val => `
+                                <button type="button" onclick="document.getElementById('swal-cash-received-inp').value='${val.toFixed(2)}'" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-amber-500 text-slate-200 hover:text-slate-950 font-bold text-[11px] transition-all">
                                     ${val === total ? `Exato (${formatBRL(val)})` : formatBRL(val)}
                                 </button>
                             `).join('')}
@@ -1849,25 +1932,86 @@
                 showCancelButton: true,
                 confirmButtonText: 'Confirmar Valor',
                 cancelButtonText: 'Cancelar',
-                didOpen: () => {
-                    const inp = document.getElementById('modal-cash-received-inp');
-                    if (inp) {
-                        inp.focus();
-                        inp.select();
-                    }
-                },
                 preConfirm: () => {
-                    const raw = parseFloat(document.getElementById('modal-cash-received-inp').value);
-                    if (isNaN(raw) || raw < total) {
-                        Swal.showValidationMessage(`O valor recebido deve ser igual ou maior que ${formatBRL(total)}.`);
+                    const val = parseFloat(document.getElementById('swal-cash-received-inp').value);
+                    if (isNaN(val) || val < total) {
+                        Swal.showValidationMessage(`O valor recebido deve ser no mínimo ${formatBRL(total)}.`);
                         return false;
                     }
-                    return Number(raw.toFixed(2));
+                    return Number(val.toFixed(2));
                 }
             }).then(res => {
                 if (!res.isConfirmed) return;
                 cashReceivedAmount = res.value;
                 calculateCashChange();
+            });
+        }
+
+        function openQuickSangriaModal() {
+            const active = getActiveUser();
+            const isAdmin = active.role === 'Administrador';
+            const rules = { ...DEFAULT_SECURITY_RULES, ...(state.securityRules || {}) };
+            const ops = state.users.filter(u => u.role !== 'Administrador' && getUserShift(u.id).isOpen);
+
+            if (!isAdmin && !getUserShift(active.id).isOpen) {
+                Swal.fire({ icon: 'warning', title: 'Caixa Fechado', text: 'Abra seu turno antes de registrar uma sangria.' });
+                return;
+            }
+            if (isAdmin && ops.length === 0) {
+                Swal.fire({ icon: 'info', title: 'Nenhum Caixa Aberto', text: 'Não há nenhum operador com turno aberto no momento.' });
+                return;
+            }
+
+            Swal.fire({
+                title: 'Sangria de Caixa',
+                html: `
+                    <div class="text-left space-y-3 mt-2 text-xs">
+                        ${isAdmin ? `
+                            <div>
+                                <label class="block font-semibold text-slate-300 mb-1">Operador / Gaveta</label>
+                                <select id="sangria-op-select" class="swal2-select w-full !m-0">
+                                    ${ops.map(o => `<option value="${o.id}">${o.name}</option>`).join('')}
+                                </select>
+                            </div>
+                        ` : ''}
+                        <p class="text-slate-400">Permitido entre <strong class="text-amber-400">${formatBRL(rules.sangriaMin)}</strong> e <strong class="text-amber-400">${formatBRL(rules.sangriaMax)}</strong>.</p>
+                        <div>
+                            <label class="block font-semibold text-slate-300 mb-1">Valor da Retirada (R$)</label>
+                            <input type="number" step="0.01" id="sangria-amount-inp" placeholder="0,00" class="swal2-input w-full !m-0">
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-slate-300 mb-1">Observação / Destino</label>
+                            <input type="text" id="sangria-note-inp" placeholder="Ex: Depósito no cofre" class="swal2-input w-full !m-0">
+                        </div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Confirmar Sangria',
+                cancelButtonText: 'Cancelar',
+                preConfirm: () => {
+                    const targetOpId = isAdmin ? document.getElementById('sangria-op-select').value : active.id;
+                    const amount = parseFloat(document.getElementById('sangria-amount-inp').value);
+                    const note = (document.getElementById('sangria-note-inp').value || '').trim() || 'Retirada operacional';
+                    if (isNaN(amount) || amount < Number(rules.sangriaMin) || amount > Number(rules.sangriaMax)) {
+                        Swal.showValidationMessage(`Informe um valor entre ${formatBRL(rules.sangriaMin)} e ${formatBRL(rules.sangriaMax)}.`);
+                        return false;
+                    }
+                    return { targetOpId, amount: Number(amount.toFixed(2)), note };
+                }
+            }).then(res => {
+                if (!res.isConfirmed) return;
+                const sh = getUserShift(res.value.targetOpId);
+                if (!sh.adjustments) sh.adjustments = [];
+                sh.adjustments.push({
+                    type: 'sangria',
+                    amount: res.value.amount,
+                    note: res.value.note,
+                    by: active.name,
+                    time: getNowBrasiliaFormatted(false)
+                });
+                saveState();
+                refreshAllUI();
+                Swal.fire({ icon: 'success', title: 'Sangria Registrada!', text: `Retirada de ${formatBRL(res.value.amount)} registrada.`, timer: 1600, showConfirmButton: false });
             });
         }
 
@@ -2756,6 +2900,12 @@
             const pill = document.getElementById('header-flow-pill');
             const dot = document.getElementById('header-flow-dot');
             const txt = document.getElementById('header-flow-text');
+            const mobFlow = document.getElementById('mob-flow-pill');
+            const mobFlowWrap = document.getElementById('mob-flow-icon-wrap');
+            const mobFlowIcon = document.getElementById('mob-flow-icon');
+            const mobFlowDot = document.getElementById('mob-flow-dot');
+            const mobFlowTxt = document.getElementById('mob-flow-text');
+
             if (pill && dot && txt) {
                 if (high) {
                     pill.className = 'h-8 sm:h-10 flex items-center gap-1 sm:gap-2 px-2 sm:px-3 rounded-lg sm:rounded-xl border text-[10px] sm:text-xs font-semibold whitespace-nowrap transition-all bg-orange-500/15 border-orange-500/40 text-orange-400';
@@ -2765,6 +2915,22 @@
                     pill.className = 'h-8 sm:h-10 flex items-center gap-1 sm:gap-2 px-2 sm:px-3 rounded-lg sm:rounded-xl border text-[10px] sm:text-xs font-semibold whitespace-nowrap transition-all bg-emerald-500/10 border-emerald-500/30 text-emerald-400';
                     dot.className = 'relative inline-flex rounded-full h-2 w-2 sm:h-2.5 sm:w-2.5 bg-emerald-500 pulse-dot';
                     txt.textContent = 'Normal';
+                }
+            }
+
+            if (mobFlow && mobFlowWrap && mobFlowIcon && mobFlowDot && mobFlowTxt) {
+                if (high) {
+                    mobFlow.className = 'flex flex-col items-center justify-center gap-0.5 text-orange-400 transition-all';
+                    mobFlowWrap.className = 'w-10 h-7 rounded-xl bg-orange-500/15 flex items-center justify-center transition-all relative';
+                    mobFlowIcon.className = 'fa-solid fa-fire-flame-curved text-sm';
+                    mobFlowDot.className = 'absolute top-1 right-1.5 inline-flex rounded-full h-2 w-2 bg-orange-500 pulse-dot';
+                    mobFlowTxt.textContent = 'Pico';
+                } else {
+                    mobFlow.className = 'flex flex-col items-center justify-center gap-0.5 text-emerald-400 transition-all';
+                    mobFlowWrap.className = 'w-10 h-7 rounded-xl bg-emerald-500/15 flex items-center justify-center transition-all relative';
+                    mobFlowIcon.className = 'fa-solid fa-gauge-high text-sm';
+                    mobFlowDot.className = 'absolute top-1 right-1.5 inline-flex rounded-full h-2 w-2 bg-emerald-500 pulse-dot';
+                    mobFlowTxt.textContent = 'Normal';
                 }
             }
 
