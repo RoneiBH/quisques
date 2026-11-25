@@ -883,6 +883,14 @@
                         <label class="block text-[11px] font-semibold text-slate-300 mb-1">Valor Máx. Estorno Operador (R$)</label>
                         <input type="number" step="0.01" min="0" id="rule-refund-max-amount" required class="w-full bg-slate-950 border border-slate-700 focus:border-amber-500 rounded-xl px-3 py-2 text-sm font-bold text-white outline-none">
                     </div>
+                    <div class="sm:col-span-2 lg:col-span-2">
+                        <label class="block text-[11px] font-semibold text-slate-300 mb-1"><i class="fa-brands fa-pix text-blue-400 mr-1"></i>Chave Pix do Quiosque (CPF/CNPJ, E-mail, Celular ou Aleatória)</label>
+                        <input type="text" id="rule-pix-key" required placeholder="Ex: 12345678000199 ou quiosque@pix.com.br" class="w-full bg-slate-950 border border-slate-700 focus:border-blue-500 rounded-xl px-3 py-2 text-sm font-bold text-white outline-none">
+                    </div>
+                    <div class="sm:col-span-2 lg:col-span-2">
+                        <label class="block text-[11px] font-semibold text-slate-300 mb-1">Nome do Recebedor (Titular Pix)</label>
+                        <input type="text" id="rule-pix-merchant" maxlength="25" required placeholder="Ex: TECH PEREIRA BH" class="w-full bg-slate-950 border border-slate-700 focus:border-blue-500 rounded-xl px-3 py-2 text-sm font-bold text-white outline-none">
+                    </div>
                     <div>
                         <button type="submit" class="w-full py-2 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold text-xs sm:text-sm transition-all flex items-center justify-center gap-2">
                             <i class="fa-solid fa-floppy-disk"></i> Salvar Regras
@@ -1015,6 +1023,32 @@
                     </div>
                 </div>
 
+                <!-- Dynamic Pix QR Code Section -->
+                <div id="pix-qrcode-section" class="hidden space-y-3 bg-slate-950/90 border border-blue-500/40 rounded-xl p-3.5 text-center">
+                    <div class="flex items-center justify-between text-xs border-b border-slate-800 pb-2">
+                        <span class="font-bold text-blue-400 flex items-center gap-1.5">
+                            <i class="fa-brands fa-pix"></i> QR Code Pix Gerado
+                        </span>
+                        <span id="pix-amount-badge" class="font-extrabold text-emerald-400">R$ 0,00</span>
+                    </div>
+
+                    <div class="bg-white p-2.5 rounded-xl inline-block mx-auto shadow-md">
+                        <img id="pix-qrcode-img" src="" alt="QR Code Pix" class="w-40 h-40 object-contain mx-auto">
+                    </div>
+
+                    <div class="text-[11px] text-slate-400 space-y-0.5">
+                        <p>Chave: <strong id="pix-key-preview" class="text-slate-200">-</strong></p>
+                        <p>Recebedor: <strong id="pix-merchant-preview" class="text-slate-200">-</strong></p>
+                    </div>
+
+                    <div class="flex items-center gap-1.5">
+                        <input type="text" id="pix-payload-input" readonly class="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-[10px] text-slate-300 font-mono outline-none">
+                        <button type="button" onclick="copyPixPayload()" class="px-3 py-1.5 rounded-lg bg-blue-500/20 hover:bg-blue-500 text-blue-400 hover:text-white font-bold text-[11px] transition-all shrink-0">
+                            <i class="fa-regular fa-copy mr-1"></i>Copiar
+                        </button>
+                    </div>
+                </div>
+
                 <button type="button" onclick="confirmCheckoutSale()" class="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold text-sm transition-all shadow-lg shadow-emerald-500/20">
                     <i class="fa-solid fa-check mr-1"></i> Confirmar Pagamento
                 </button>
@@ -1088,7 +1122,10 @@
             sangriaMin: 10.00,
             sangriaMax: 500.00,
             dailyRefundLimit: 1,
-            refundMaxAmount: 5.00
+            refundMaxAmount: 5.00,
+            pixKey: 'quiosque@techpereirabh.com.br',
+            pixMerchantName: 'TECH PEREIRA BH',
+            pixCity: 'BELO HORIZONTE'
         };
 
         let currentTab = 'pdv';
@@ -1758,6 +1795,104 @@
             });
             const cashSec = document.getElementById('cash-change-section');
             if (cashSec) cashSec.classList.toggle('hidden', method !== 'Dinheiro');
+
+            const pixSec = document.getElementById('pix-qrcode-section');
+            if (pixSec) {
+                pixSec.classList.toggle('hidden', method !== 'Pix');
+                if (method === 'Pix') {
+                    renderCheckoutPixQRCode();
+                }
+            }
+        }
+
+        function formatEMVField(id, value) {
+            const str = String(value || '');
+            const len = String(str.length).padStart(2, '0');
+            return `${id}${len}${str}`;
+        }
+
+        function computeCRC16CCITT(payload) {
+            let crc = 0xFFFF;
+            for (let i = 0; i < payload.length; i++) {
+                crc ^= payload.charCodeAt(i) << 8;
+                for (let j = 0; j < 8; j++) {
+                    if ((crc & 0x8000) !== 0) {
+                        crc = ((crc << 1) ^ 0x1021) & 0xFFFF;
+                    } else {
+                        crc = (crc << 1) & 0xFFFF;
+                    }
+                }
+            }
+            return crc.toString(16).toUpperCase().padStart(4, '0');
+        }
+
+        function generatePixEMVPayload(amount) {
+            const rules = { ...DEFAULT_SECURITY_RULES, ...(state.securityRules || {}) };
+            const pixKey = String(rules.pixKey || 'quiosque@techpereirabh.com.br').trim();
+            const merchantName = String(rules.pixMerchantName || 'TECH PEREIRA BH')
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .replace(/[^a-zA-Z0-9 ]/g, '').toUpperCase().slice(0, 25) || 'QUIOSQUE PDV';
+            const merchantCity = String(rules.pixCity || 'BELO HORIZONTE')
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .replace(/[^a-zA-Z0-9 ]/g, '').toUpperCase().slice(0, 15) || 'BELO HORIZONTE';
+
+            const amountStr = Number(amount || 0).toFixed(2);
+            const txid = ('PDV' + Date.now().toString().slice(-8)).slice(0, 25);
+
+            const merchantAccountInfo = formatEMVField('00', 'br.gov.bcb.pix') + formatEMVField('01', pixKey);
+            const additionalData = formatEMVField('05', txid);
+
+            const rawPayload =
+                formatEMVField('00', '01') +
+                formatEMVField('26', merchantAccountInfo) +
+                formatEMVField('52', '0000') +
+                formatEMVField('53', '986') +
+                (Number(amount) > 0 ? formatEMVField('54', amountStr) : '') +
+                formatEMVField('58', 'BR') +
+                formatEMVField('59', merchantName) +
+                formatEMVField('60', merchantCity) +
+                formatEMVField('62', additionalData) +
+                '6304';
+
+            const crc = computeCRC16CCITT(rawPayload);
+            return {
+                payload: rawPayload + crc,
+                pixKey,
+                merchantName
+            };
+        }
+
+        function renderCheckoutPixQRCode() {
+            const total = Number(cart.reduce((a, b) => a + b.price * b.qty, 0).toFixed(2));
+            const { payload, pixKey, merchantName } = generatePixEMVPayload(total);
+
+            const amountBadge = document.getElementById('pix-amount-badge');
+            const keyPreview = document.getElementById('pix-key-preview');
+            const merchantPreview = document.getElementById('pix-merchant-preview');
+            const payloadInp = document.getElementById('pix-payload-input');
+            const qrImg = document.getElementById('pix-qrcode-img');
+
+            if (amountBadge) amountBadge.textContent = formatBRL(total);
+            if (keyPreview) keyPreview.textContent = pixKey;
+            if (merchantPreview) merchantPreview.textContent = merchantName;
+            if (payloadInp) payloadInp.value = payload;
+            if (qrImg) {
+                qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=6&data=${encodeURIComponent(payload)}`;
+            }
+        }
+
+        function copyPixPayload() {
+            const payloadInp = document.getElementById('pix-payload-input');
+            if (!payloadInp || !payloadInp.value) return;
+            navigator.clipboard?.writeText(payloadInp.value);
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: 'Código Pix Copia e Cola copiado!',
+                timer: 1600,
+                showConfirmButton: false
+            });
         }
 
         function calculateCashChange() {
@@ -2668,6 +2803,8 @@
             const sangriaMax = parseFloat(document.getElementById('rule-sangria-max')?.value) || 500;
             const dailyRefundLimit = parseInt(document.getElementById('rule-refund-limit')?.value, 10) || 1;
             const refundMaxAmount = parseFloat(document.getElementById('rule-refund-max-amount')?.value) ?? 5.00;
+            const pixKey = (document.getElementById('rule-pix-key')?.value || '').trim() || DEFAULT_SECURITY_RULES.pixKey;
+            const pixMerchantName = (document.getElementById('rule-pix-merchant')?.value || '').trim() || DEFAULT_SECURITY_RULES.pixMerchantName;
 
             if (sangriaMin > sangriaMax) {
                 Swal.fire({ icon: 'warning', title: 'Valores Inválidos', text: 'O valor mínimo de sangria não pode ser maior que o máximo.' });
@@ -2675,13 +2812,16 @@
             }
 
             state.securityRules = {
+                ...(state.securityRules || DEFAULT_SECURITY_RULES),
                 sangriaMin: Number(sangriaMin.toFixed(2)),
                 sangriaMax: Number(sangriaMax.toFixed(2)),
                 dailyRefundLimit: Math.max(1, dailyRefundLimit),
-                refundMaxAmount: Math.max(0, Number(refundMaxAmount.toFixed(2)))
+                refundMaxAmount: Math.max(0, Number(refundMaxAmount.toFixed(2))),
+                pixKey,
+                pixMerchantName
             };
             saveState();
-            Swal.fire({ icon: 'success', title: 'Regras Salvas!', text: 'As regras operacionais de sangria e estorno foram atualizadas.', timer: 1500, showConfirmButton: false });
+            Swal.fire({ icon: 'success', title: 'Regras Salvas!', text: 'As regras operacionais e a chave Pix foram atualizadas.', timer: 1500, showConfirmButton: false });
         }
 
         // ==================== REPORTS, CHARTS & PRINT PDF ====================
@@ -3155,10 +3295,14 @@
             const maxInp = document.getElementById('rule-sangria-max');
             const refInp = document.getElementById('rule-refund-limit');
             const refMaxInp = document.getElementById('rule-refund-max-amount');
+            const pixKeyInp = document.getElementById('rule-pix-key');
+            const pixMerchantInp = document.getElementById('rule-pix-merchant');
             if (minInp) minInp.value = Number(rules.sangriaMin).toFixed(2);
             if (maxInp) maxInp.value = Number(rules.sangriaMax).toFixed(2);
             if (refInp) refInp.value = Number(rules.dailyRefundLimit) || 1;
             if (refMaxInp) refMaxInp.value = Number(rules.refundMaxAmount ?? 5.00).toFixed(2);
+            if (pixKeyInp) pixKeyInp.value = rules.pixKey || DEFAULT_SECURITY_RULES.pixKey;
+            if (pixMerchantInp) pixMerchantInp.value = rules.pixMerchantName || DEFAULT_SECURITY_RULES.pixMerchantName;
             const grid = document.getElementById('users-grid');
             if (!grid) return;
             grid.innerHTML = state.users.map(u => {
