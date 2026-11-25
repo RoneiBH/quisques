@@ -236,6 +236,40 @@
 </head>
 <body class="bg-slate-950 text-slate-100 font-sans min-h-screen w-full max-w-full overflow-x-hidden flex flex-col selection:bg-amber-500 selection:text-slate-950">
 
+    <!-- Dedicated Login Screen Overlay -->
+    <div id="login-screen" class="fixed inset-0 z-[11000] bg-slate-950/98 backdrop-blur-xl flex items-center justify-center p-4 overflow-y-auto">
+        <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 my-auto">
+            <!-- Brand Header -->
+            <div class="text-center space-y-2.5">
+                <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-slate-950 font-extrabold text-2xl shadow-lg shadow-amber-500/25 mx-auto">
+                    <i class="fa-solid fa-mug-hot"></i>
+                </div>
+                <div>
+                    <div class="inline-flex items-center gap-2">
+                        <h1 class="font-extrabold text-xl sm:text-2xl tracking-tight text-white">PDV QUIOSQUE</h1>
+                        <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30">Acesso Rápido</span>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-1">TECH PEREIRA BH • Selecione seu usuário autorizado para entrar</p>
+                </div>
+            </div>
+
+            <!-- Authorized Users List -->
+            <div class="space-y-2.5">
+                <div class="flex items-center justify-between px-1">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Pessoas Autorizadas</span>
+                    <span class="text-[10px] text-emerald-400 font-semibold"><i class="fa-solid fa-unlock mr-1"></i>Modo Teste (Sem Senha)</span>
+                </div>
+                <div id="login-screen-users-list" class="space-y-2.5 max-h-[52vh] overflow-y-auto pr-0.5">
+                    <!-- Rendered via JS -->
+                </div>
+            </div>
+
+            <div class="pt-3 border-t border-slate-800/80 text-center">
+                <p class="text-[11px] text-slate-500">Controle de acesso e horários gerenciados pelo Administrador.</p>
+            </div>
+        </div>
+    </div>
+
     <!-- Top Navigation Bar -->
     <header class="bg-slate-900/95 backdrop-blur-md border-b border-slate-800 sticky top-0 z-40 w-full max-w-full">
         <div class="max-w-[1600px] w-full mx-auto px-2.5 sm:px-6 py-2 sm:py-3 flex flex-wrap xl:flex-nowrap items-center justify-between gap-2 sm:gap-3 min-w-0">
@@ -308,6 +342,12 @@
                         <p class="text-[10px] text-slate-400 leading-tight" id="active-user-role">Administrador • Trocar</p>
                     </div>
                     <i class="fa-solid fa-chevron-down text-[9px] sm:text-[10px] text-slate-400"></i>
+                </button>
+
+                <!-- Logout / Back to Login Screen Button -->
+                <button type="button" onclick="logoutToLoginScreen()" title="Sair para tela de login" class="h-8 sm:h-10 flex items-center gap-1.5 bg-red-500/10 hover:bg-red-500 border border-red-500/30 text-red-400 hover:text-white px-2 sm:px-3 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-bold whitespace-nowrap transition-all shrink-0">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span class="hidden sm:inline">Sair</span>
                 </button>
             </div>
         </div>
@@ -1056,6 +1096,7 @@
         let adminInspectOperatorId = null;
         let manualHighDemandAlert = false;
         let selectedPaymentMethod = 'Dinheiro';
+        let isSessionAuthenticated = false;
         let cart = [];
 
         function formatBRL(val) {
@@ -1086,6 +1127,50 @@
             return timeOnly ? timeStr : `${dateStr} ${timeStr}`;
         }
 
+        function getCurrentBrasiliaMinutes() {
+            const timeStr = getNowBrasiliaFormatted(true); // HH:MM
+            const [hh, mm] = timeStr.split(':').map(n => parseInt(n, 10) || 0);
+            return hh * 60 + mm;
+        }
+
+        function parseTimeToMinutes(hhmm) {
+            if (!hhmm || !hhmm.includes(':')) return 0;
+            const [hh, mm] = hhmm.split(':').map(n => parseInt(n, 10) || 0);
+            return hh * 60 + mm;
+        }
+
+        function getUserAccessStatus(user) {
+            if (!user) return { allowed: false, reason: 'Usuário inválido', badge: 'Inválido' };
+            if (user.blocked) {
+                return {
+                    allowed: false,
+                    reason: 'Acesso bloqueado, consultar o gerente.',
+                    badge: 'Bloqueado (Indeterminado)'
+                };
+            }
+            if (user.scheduleEnabled && user.workStart && user.workEnd) {
+                const nowMin = getCurrentBrasiliaMinutes();
+                const startMin = parseTimeToMinutes(user.workStart);
+                const endMin = parseTimeToMinutes(user.workEnd);
+                const inWindow = startMin <= endMin
+                    ? (nowMin >= startMin && nowMin <= endMin)
+                    : (nowMin >= startMin || nowMin <= endMin);
+                if (!inWindow) {
+                    return {
+                        allowed: false,
+                        reason: `Acesso liberado somente no horário de trabalho (${user.workStart} às ${user.workEnd}).`,
+                        badge: `Fora do Horário (${user.workStart}-${user.workEnd})`
+                    };
+                }
+                return {
+                    allowed: true,
+                    reason: `Horário ativo (${user.workStart} às ${user.workEnd})`,
+                    badge: `Turno ${user.workStart}-${user.workEnd}`
+                };
+            }
+            return { allowed: true, reason: 'Acesso livre', badge: null };
+        }
+
         function getInitialDemoState() {
             const todayISO = getBrasiliaISODate(0);
             const todayBR = todayISO.split('-').reverse().join('/');
@@ -1094,9 +1179,9 @@
                 lastActiveMonthKey: getCurrentBrasiliaMonthKey(),
                 securityRules: { ...DEFAULT_SECURITY_RULES },
                 users: [
-                    { id: 'u_admin', name: 'Admin (Gerente)', role: 'Administrador', pin: '1234', active: true, blocked: false },
-                    { id: 'u1', name: 'João Silva', role: 'Operador de Caixa', pin: '1111', active: true, blocked: false },
-                    { id: 'u2', name: 'Maria Oliveira', role: 'Operador de Caixa', pin: '2222', active: true, blocked: false }
+                    { id: 'u_admin', name: 'Admin (Gerente)', role: 'Administrador', pin: '1234', active: true, blocked: false, scheduleEnabled: false, workStart: '07:00', workEnd: '22:00' },
+                    { id: 'u1', name: 'João Silva', role: 'Operador de Caixa', pin: '1111', active: true, blocked: false, scheduleEnabled: true, workStart: '07:00', workEnd: '15:00' },
+                    { id: 'u2', name: 'Maria Oliveira', role: 'Operador de Caixa', pin: '2222', active: true, blocked: false, scheduleEnabled: true, workStart: '15:00', workEnd: '23:00' }
                 ],
                 shifts: {
                     u1: {
@@ -1375,50 +1460,77 @@
         }
 
         function openLoginModal() {
-            const optionsHtml = state.users.map(u => `
-                <button type="button" onclick="Swal.close(); switchActiveUser('${u.id}')" class="w-full p-3 rounded-xl border ${u.id === state.activeUserId ? 'border-amber-500 bg-amber-500/10' : 'border-slate-700 bg-slate-900 hover:bg-slate-800'} flex items-center justify-between text-left transition-all">
-                    <div class="flex items-center gap-3">
-                        <div class="w-9 h-9 rounded-lg bg-slate-800 text-amber-400 font-bold text-xs flex items-center justify-center">
-                            ${u.name.split(' ').map(x => x[0]).join('').slice(0, 2).toUpperCase()}
-                        </div>
-                        <div>
-                            <p class="font-bold text-sm text-white">${u.name}</p>
-                            <p class="text-xs text-slate-400">${u.role}</p>
-                        </div>
-                    </div>
-                    <span class="text-xs font-bold ${u.blocked ? 'text-red-400' : 'text-emerald-400'}">
-                        ${u.blocked ? 'Bloqueado' : (u.id === state.activeUserId ? 'Ativo' : 'Entrar →')}
-                    </span>
-                </button>
-            `).join('');
-
-            Swal.fire({
-                title: 'Trocar Usuário / Operador',
-                html: `<div class="space-y-2 mt-2">${optionsHtml}</div>`,
-                showConfirmButton: false,
-                showCancelButton: true,
-                cancelButtonText: 'Fechar'
-            });
+            renderLoginScreen();
+            const loginEl = document.getElementById('login-screen');
+            if (loginEl) loginEl.classList.remove('hidden');
         }
 
-        function switchActiveUser(userId) {
+        function logoutToLoginScreen() {
+            isSessionAuthenticated = false;
+            cart = [];
+            adminInspectOperatorId = null;
+            openLoginModal();
+        }
+
+        function renderLoginScreen() {
+            const listEl = document.getElementById('login-screen-users-list');
+            if (!listEl) return;
+
+            listEl.innerHTML = state.users.map(u => {
+                const access = getUserAccessStatus(u);
+                const initials = u.name.split(' ').map(x => x[0]).join('').slice(0, 2).toUpperCase();
+                const isAdmin = u.role === 'Administrador';
+                return `
+                    <button type="button" onclick="loginWithAuthorizedUser('${u.id}')" class="w-full p-3.5 rounded-2xl border ${!access.allowed ? 'border-red-500/35 bg-slate-950/60 opacity-80' : 'border-slate-800 hover:border-amber-500/70 bg-slate-950 hover:bg-slate-800/80'} flex items-center justify-between gap-3 text-left transition-all active:scale-[0.99]">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <div class="w-11 h-11 rounded-xl ${!access.allowed ? 'bg-red-500/15 text-red-400' : (isAdmin ? 'bg-purple-500/15 text-purple-300' : 'bg-amber-500/15 text-amber-400')} font-extrabold text-sm flex items-center justify-center shrink-0">
+                                ${!access.allowed ? '<i class="fa-solid fa-user-lock"></i>' : initials}
+                            </div>
+                            <div class="min-w-0">
+                                <p class="font-bold text-sm text-white truncate">${u.name}</p>
+                                <p class="text-xs text-slate-400 truncate">${u.role}${u.scheduleEnabled && !isAdmin ? ` • ${u.workStart} às ${u.workEnd}` : ''}</p>
+                            </div>
+                        </div>
+                        <span class="px-3 py-1.5 rounded-xl text-xs font-extrabold shrink-0 ${!access.allowed ? 'bg-red-500/15 text-red-400' : 'bg-emerald-500/15 text-emerald-400'}">
+                            ${!access.allowed ? (u.blocked ? 'Bloqueado' : 'Fora do Horário') : 'Entrar →'}
+                        </span>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function loginWithAuthorizedUser(userId) {
             const target = state.users.find(u => u.id === userId);
             if (!target) return;
-            if (target.blocked) {
-                Swal.fire({ icon: 'error', title: 'Acesso Bloqueado', text: 'Este usuário está bloqueado pelo gerente.' });
+            const access = getUserAccessStatus(target);
+            if (!access.allowed) {
+                Swal.fire({
+                    icon: 'error',
+                    title: target.blocked ? 'Acesso Bloqueado' : 'Fora do Horário de Trabalho',
+                    text: access.reason
+                });
                 return;
             }
             state.activeUserId = userId;
+            isSessionAuthenticated = true;
             adminInspectOperatorId = null;
             cart = [];
             const searchEl = document.getElementById('pdv-search');
             if (searchEl) searchEl.value = '';
             saveState();
+
+            const loginEl = document.getElementById('login-screen');
+            if (loginEl) loginEl.classList.add('hidden');
+
             switchTab('pdv');
             refreshAllUI();
             setTimeout(() => {
                 checkOperatorNotifications();
             }, 250);
+        }
+
+        function switchActiveUser(userId) {
+            loginWithAuthorizedUser(userId);
         }
 
         // ==================== PDV PRODUCTS, CART & CHECKOUT ====================
@@ -2898,12 +3010,108 @@
             renderUsersGrid();
             Swal.fire({
                 icon: target.blocked ? 'warning' : 'success',
-                title: target.blocked ? 'Login Bloqueado' : 'Login Desbloqueado',
+                title: target.blocked ? 'Bloqueado por Tempo Indeterminado' : 'Acesso Reativado',
                 text: target.blocked
-                    ? `O acesso de ${target.name} foi bloqueado.`
-                    : `O acesso de ${target.name} foi liberado novamente.`,
-                timer: 1500,
+                    ? `${target.name} foi bloqueado por tempo indeterminado.`
+                    : `O bloqueio indeterminado de ${target.name} foi removido.`,
+                timer: 1600,
                 showConfirmButton: false
+            });
+        }
+
+        function openUserScheduleModal(userId) {
+            const target = state.users.find(u => u.id === userId);
+            if (!target) return;
+
+            Swal.fire({
+                title: `Horário de Trabalho • ${target.name}`,
+                html: `
+                    <div class="text-left space-y-3 mt-2 text-xs">
+                        <label class="flex items-center justify-between bg-slate-950 border border-slate-800 rounded-xl p-3 cursor-pointer">
+                            <div>
+                                <span class="font-bold text-white block">Restringir ao Horário de Trabalho</span>
+                                <span class="text-[11px] text-slate-400">Libera o login apenas dentro da janela definida abaixo.</span>
+                            </div>
+                            <input type="checkbox" id="sched-enabled-chk" ${target.scheduleEnabled ? 'checked' : ''} class="w-4 h-4 accent-amber-500">
+                        </label>
+                        <div class="grid grid-cols-2 gap-2.5">
+                            <div>
+                                <label class="block font-semibold text-slate-300 mb-1">Entrada (Início)</label>
+                                <input type="time" id="sched-start-inp" value="${target.workStart || '08:00'}" class="swal2-input w-full !m-0">
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-slate-300 mb-1">Saída (Fim)</label>
+                                <input type="time" id="sched-end-inp" value="${target.workEnd || '16:00'}" class="swal2-input w-full !m-0">
+                            </div>
+                        </div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Salvar Horário',
+                cancelButtonText: 'Cancelar',
+                preConfirm: () => {
+                    const scheduleEnabled = document.getElementById('sched-enabled-chk').checked;
+                    const workStart = document.getElementById('sched-start-inp').value;
+                    const workEnd = document.getElementById('sched-end-inp').value;
+                    if (scheduleEnabled && (!workStart || !workEnd)) {
+                        Swal.showValidationMessage('Informe o horário de entrada e saída.');
+                        return false;
+                    }
+                    return { scheduleEnabled, workStart, workEnd };
+                }
+            }).then(res => {
+                if (!res.isConfirmed) return;
+                target.scheduleEnabled = res.value.scheduleEnabled;
+                target.workStart = res.value.workStart;
+                target.workEnd = res.value.workEnd;
+                saveState();
+                renderUsersGrid();
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Horário Atualizado!',
+                    text: target.scheduleEnabled
+                        ? `Acesso de ${target.name} liberado das ${target.workStart} às ${target.workEnd}.`
+                        : `Acesso de ${target.name} sem restrição de horário.`,
+                    timer: 1700,
+                    showConfirmButton: false
+                });
+            });
+        }
+
+        function deleteEmployeeUser(userId) {
+            const target = state.users.find(u => u.id === userId);
+            if (!target) return;
+            if (target.id === state.activeUserId || target.role === 'Administrador') {
+                Swal.fire({ icon: 'warning', title: 'Ação não permitida', text: 'Não é possível excluir a conta do administrador ativo.' });
+                return;
+            }
+
+            Swal.fire({
+                icon: 'warning',
+                title: `Excluir ${target.name}?`,
+                text: 'Esta ação remove permanentemente o funcionário da equipe (o histórico de vendas anteriores permanece salvo nos relatórios).',
+                showCancelButton: true,
+                confirmButtonText: 'Sim, Excluir Funcionário',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#ef4444'
+            }).then(res => {
+                if (!res.isConfirmed) return;
+                state.users = state.users.filter(u => u.id !== userId);
+                if (state.shifts && state.shifts[userId]) {
+                    delete state.shifts[userId];
+                }
+                if (adminInspectOperatorId === userId) {
+                    adminInspectOperatorId = null;
+                }
+                saveState();
+                refreshAllUI();
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Funcionário Excluído',
+                    text: `${target.name} foi removido da equipe.`,
+                    timer: 1500,
+                    showConfirmButton: false
+                });
             });
         }
 
@@ -2921,10 +3129,11 @@
             if (!grid) return;
             grid.innerHTML = state.users.map(u => {
                 const sh = getUserShift(u.id);
+                const access = getUserAccessStatus(u);
                 const isBlocked = !!u.blocked;
                 const isSelf = u.id === state.activeUserId;
                 return `
-                    <div class="bg-slate-900 border ${isBlocked ? 'border-red-500/45' : 'border-slate-800 hover:border-slate-700'} rounded-2xl p-3.5 flex flex-col justify-between gap-2.5 transition-all">
+                    <div class="bg-slate-900 border ${isBlocked ? 'border-red-500/45' : (!access.allowed ? 'border-amber-500/40' : 'border-slate-800 hover:border-slate-700')} rounded-2xl p-3.5 flex flex-col justify-between gap-3 transition-all">
                         <div class="flex items-center justify-between gap-2">
                             <div class="flex items-center gap-2.5 min-w-0">
                                 <div class="w-9 h-9 rounded-xl ${isBlocked ? 'bg-red-500/15 text-red-400' : 'bg-amber-500/15 text-amber-400'} font-extrabold text-xs flex items-center justify-center shrink-0">
@@ -2939,12 +3148,27 @@
                                 ${isBlocked ? 'Bloqueado' : (u.role === 'Administrador' ? 'Gerência' : (sh.isOpen ? 'Caixa Aberto' : 'Offline'))}
                             </span>
                         </div>
-                        <div class="pt-2 border-t border-slate-800 flex items-center justify-between gap-2 text-[11px] text-slate-400">
+
+                        ${u.role !== 'Administrador' ? `
+                            <div class="bg-slate-950 border border-slate-800/90 rounded-xl px-2.5 py-2 flex items-center justify-between gap-2 text-[11px]">
+                                <span class="${isBlocked ? 'text-red-400' : (u.scheduleEnabled ? (access.allowed ? 'text-emerald-400' : 'text-amber-400') : 'text-slate-400')} truncate">
+                                    <i class="fa-regular fa-clock mr-1"></i>${isBlocked ? 'Bloqueado (Indeterminado)' : (u.scheduleEnabled ? `Turno: ${u.workStart} às ${u.workEnd}` : 'Horário Livre')}
+                                </span>
+                                <button type="button" onclick="openUserScheduleModal('${u.id}')" class="px-2 py-0.5 rounded-md bg-blue-500/15 hover:bg-blue-500 text-blue-400 hover:text-white font-bold text-[10px] transition-all shrink-0">
+                                    <i class="fa-solid fa-clock mr-1"></i>Horário
+                                </button>
+                            </div>
+                        ` : ''}
+
+                        <div class="pt-2 border-t border-slate-800 flex flex-wrap items-center justify-between gap-1.5 text-[11px] text-slate-400">
                             <span>PIN: ••••</span>
-                            <div class="flex items-center gap-1.5">
+                            <div class="flex items-center gap-1.5 flex-wrap justify-end">
                                 ${!isSelf ? `
-                                    <button type="button" onclick="toggleUserLoginBlock('${u.id}')" class="px-2 py-1 rounded-lg font-bold transition-all ${isBlocked ? 'bg-emerald-500/15 hover:bg-emerald-500 text-emerald-400 hover:text-slate-950' : 'bg-red-500/15 hover:bg-red-500 text-red-400 hover:text-white'}">
-                                        <i class="fa-solid ${isBlocked ? 'fa-unlock' : 'fa-lock'} mr-1"></i>${isBlocked ? 'Desbloquear' : 'Bloquear'}
+                                    <button type="button" onclick="toggleUserLoginBlock('${u.id}')" title="Bloquear ou reativar acesso por tempo indeterminado" class="px-2 py-1 rounded-lg font-bold transition-all ${isBlocked ? 'bg-emerald-500/15 hover:bg-emerald-500 text-emerald-400 hover:text-slate-950' : 'bg-red-500/15 hover:bg-red-500 text-red-400 hover:text-white'}">
+                                        <i class="fa-solid ${isBlocked ? 'fa-unlock' : 'fa-ban'} mr-1"></i>${isBlocked ? 'Reativar' : 'Bloquear'}
+                                    </button>
+                                    <button type="button" onclick="deleteEmployeeUser('${u.id}')" title="Excluir funcionário permanentemente" class="px-2 py-1 rounded-lg bg-slate-800 hover:bg-red-600 text-slate-300 hover:text-white font-bold transition-all">
+                                        <i class="fa-solid fa-trash-can"></i>
                                     </button>
                                 ` : ''}
                                 ${u.role !== 'Administrador'
@@ -2961,13 +3185,27 @@
             Swal.fire({
                 title: 'Cadastrar Funcionário',
                 html: `
-                    <div class="text-left space-y-3 mt-2">
+                    <div class="text-left space-y-3 mt-2 text-xs">
                         <input type="text" id="new-user-name" placeholder="Nome completo" class="swal2-input w-full !m-0">
                         <select id="new-user-role" class="swal2-select w-full !m-0">
                             <option value="Operador de Caixa">Operador de Caixa</option>
                             <option value="Administrador">Administrador</option>
                         </select>
                         <input type="password" id="new-user-pin" maxlength="4" placeholder="PIN de 4 dígitos" class="swal2-input w-full !m-0">
+                        <label class="flex items-center justify-between bg-slate-950 border border-slate-800 rounded-xl p-2.5 cursor-pointer">
+                            <span class="font-semibold text-slate-300">Liberar apenas no horário de trabalho</span>
+                            <input type="checkbox" id="new-user-sched-enabled" checked class="w-4 h-4 accent-amber-500">
+                        </label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-slate-400 mb-1">Entrada</label>
+                                <input type="time" id="new-user-start" value="08:00" class="swal2-input w-full !m-0">
+                            </div>
+                            <div>
+                                <label class="block text-slate-400 mb-1">Saída</label>
+                                <input type="time" id="new-user-end" value="16:00" class="swal2-input w-full !m-0">
+                            </div>
+                        </div>
                     </div>
                 `,
                 showCancelButton: true,
@@ -2977,16 +3215,29 @@
                     const name = (document.getElementById('new-user-name').value || '').trim();
                     const role = document.getElementById('new-user-role').value;
                     const pin = (document.getElementById('new-user-pin').value || '').trim() || '0000';
+                    const scheduleEnabled = document.getElementById('new-user-sched-enabled').checked;
+                    const workStart = document.getElementById('new-user-start').value || '08:00';
+                    const workEnd = document.getElementById('new-user-end').value || '16:00';
                     if (!name) {
                         Swal.showValidationMessage('Informe o nome do funcionário.');
                         return false;
                     }
-                    return { name, role, pin };
+                    return { name, role, pin, scheduleEnabled, workStart, workEnd };
                 }
             }).then(res => {
                 if (res.isConfirmed) {
                     const id = 'u' + Date.now();
-                    state.users.push({ id, name: res.value.name, role: res.value.role, pin: res.value.pin, active: true });
+                    state.users.push({
+                        id,
+                        name: res.value.name,
+                        role: res.value.role,
+                        pin: res.value.pin,
+                        active: true,
+                        blocked: false,
+                        scheduleEnabled: res.value.scheduleEnabled,
+                        workStart: res.value.workStart,
+                        workEnd: res.value.workEnd
+                    });
                     getUserShift(id);
                     saveState();
                     refreshAllUI();
@@ -3045,6 +3296,9 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             refreshAllUI();
+            if (!isSessionAuthenticated) {
+                openLoginModal();
+            }
 
             // Sincronização em tempo real entre abas / sessões do navegador
             window.addEventListener('storage', (e) => {
