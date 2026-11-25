@@ -1014,8 +1014,13 @@
 
                 <div id="cash-change-section" class="space-y-2 bg-slate-950/70 border border-slate-800 rounded-xl p-3">
                     <div class="flex items-center justify-between gap-2">
-                        <label class="text-xs font-semibold text-slate-300">Valor Recebido (R$):</label>
-                        <input type="number" step="0.01" id="cash-received-input" oninput="calculateCashChange()" placeholder="0,00" class="w-32 bg-slate-900 border border-slate-700 focus:border-emerald-500 rounded-lg px-3 py-1.5 text-right font-bold text-sm text-white outline-none">
+                        <span class="text-xs font-semibold text-slate-300">Valor Recebido:</span>
+                        <div class="flex items-center gap-2">
+                            <strong id="cash-received-summary" class="text-sm font-extrabold text-white">R$ 0,00</strong>
+                            <button type="button" onclick="openCashReceivedModal()" class="px-2.5 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500 text-emerald-400 hover:text-slate-950 font-bold text-[11px] transition-all">
+                                <i class="fa-solid fa-pen mr-1"></i>Informar
+                            </button>
+                        </div>
                     </div>
                     <div class="flex items-center justify-between text-xs pt-1 border-t border-slate-800">
                         <span class="text-slate-400">Troco a devolver:</span>
@@ -1029,7 +1034,12 @@
                         <span class="font-bold text-blue-400 flex items-center gap-1.5">
                             <i class="fa-brands fa-pix"></i> QR Code Pix Gerado
                         </span>
-                        <span id="pix-amount-badge" class="font-extrabold text-emerald-400">R$ 0,00</span>
+                        <div class="flex items-center gap-2">
+                            <span id="pix-amount-badge" class="font-extrabold text-emerald-400">R$ 0,00</span>
+                            <button type="button" onclick="openQuickPixKeyTestModal()" title="Alterar chave Pix para testar no banco" class="px-2 py-0.5 rounded-md bg-blue-500/15 hover:bg-blue-500 text-blue-300 hover:text-white text-[10px] font-bold transition-all">
+                                <i class="fa-solid fa-pen mr-1"></i>Trocar Chave
+                            </button>
+                        </div>
                     </div>
 
                     <div class="bg-white p-2.5 rounded-xl inline-block mx-auto shadow-md">
@@ -1037,7 +1047,7 @@
                     </div>
 
                     <div class="text-[11px] text-slate-400 space-y-0.5">
-                        <p>Chave: <strong id="pix-key-preview" class="text-slate-200">-</strong></p>
+                        <p>Chave (<span id="pix-key-type-badge" class="text-blue-400 font-semibold">-</span>): <strong id="pix-key-preview" class="text-slate-200">-</strong></p>
                         <p>Recebedor: <strong id="pix-merchant-preview" class="text-slate-200">-</strong></p>
                     </div>
 
@@ -1137,6 +1147,7 @@
         let manualHighDemandAlert = false;
         let selectedPaymentMethod = 'Dinheiro';
         let isSessionAuthenticated = false;
+        let cashReceivedAmount = 0;
         let cart = [];
 
         function formatBRL(val) {
@@ -1778,14 +1789,13 @@
             const total = cart.reduce((a, b) => a + b.price * b.qty, 0);
             const disp = document.getElementById('checkout-total-display');
             if (disp) disp.textContent = formatBRL(total);
-            selectPaymentMethod('Dinheiro');
-            const inp = document.getElementById('cash-received-input');
-            if (inp) inp.value = '';
+            cashReceivedAmount = 0;
+            selectPaymentMethod('Dinheiro', false);
             calculateCashChange();
             openModal('checkout-modal');
         }
 
-        function selectPaymentMethod(method) {
+        function selectPaymentMethod(method, triggerCashModal = true) {
             selectedPaymentMethod = method;
             document.querySelectorAll('.pay-method-btn').forEach(btn => {
                 const active = btn.getAttribute('data-pay') === method;
@@ -1803,6 +1813,62 @@
                     renderCheckoutPixQRCode();
                 }
             }
+
+            if (method === 'Dinheiro' && triggerCashModal) {
+                openCashReceivedModal();
+            }
+        }
+
+        function openCashReceivedModal() {
+            const total = Number(cart.reduce((a, b) => a + b.price * b.qty, 0).toFixed(2));
+            if (total <= 0) return;
+
+            const quickBills = [total, 10, 20, 50, 100].filter((v, idx, arr) => v >= total && arr.indexOf(v) === idx);
+
+            Swal.fire({
+                title: 'Pagamento em Dinheiro',
+                html: `
+                    <div class="text-left space-y-3 mt-2 text-xs">
+                        <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 flex items-center justify-between">
+                            <span class="text-slate-400 font-semibold">Total da Compra:</span>
+                            <strong class="text-lg font-extrabold text-emerald-400">${formatBRL(total)}</strong>
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-slate-300 mb-1.5">Valor Recebido do Cliente (R$)</label>
+                            <input type="number" step="0.01" min="${total}" id="modal-cash-received-inp" value="${cashReceivedAmount > 0 ? cashReceivedAmount.toFixed(2) : ''}" placeholder="0,00" class="swal2-input w-full !m-0 text-right !text-lg !font-extrabold">
+                        </div>
+                        <div class="flex flex-wrap gap-1.5 pt-1">
+                            ${quickBills.map(val => `
+                                <button type="button" onclick="document.getElementById('modal-cash-received-inp').value='${val.toFixed(2)}'" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-emerald-500 text-slate-200 hover:text-slate-950 font-bold text-[11px] transition-all">
+                                    ${val === total ? `Exato (${formatBRL(val)})` : formatBRL(val)}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Confirmar Valor',
+                cancelButtonText: 'Cancelar',
+                didOpen: () => {
+                    const inp = document.getElementById('modal-cash-received-inp');
+                    if (inp) {
+                        inp.focus();
+                        inp.select();
+                    }
+                },
+                preConfirm: () => {
+                    const raw = parseFloat(document.getElementById('modal-cash-received-inp').value);
+                    if (isNaN(raw) || raw < total) {
+                        Swal.showValidationMessage(`O valor recebido deve ser igual ou maior que ${formatBRL(total)}.`);
+                        return false;
+                    }
+                    return Number(raw.toFixed(2));
+                }
+            }).then(res => {
+                if (!res.isConfirmed) return;
+                cashReceivedAmount = res.value;
+                calculateCashChange();
+            });
         }
 
         function formatEMVField(id, value) {
@@ -1896,10 +1962,12 @@
         }
 
         function calculateCashChange() {
-            const total = cart.reduce((a, b) => a + b.price * b.qty, 0);
-            const rec = parseFloat(document.getElementById('cash-received-input')?.value) || 0;
-            const change = Math.max(0, rec - total);
+            const total = Number(cart.reduce((a, b) => a + b.price * b.qty, 0).toFixed(2));
+            const rec = Number(cashReceivedAmount || 0);
+            const change = rec >= total ? Number((rec - total).toFixed(2)) : 0;
+            const recEl = document.getElementById('cash-received-summary');
             const el = document.getElementById('cash-change-display');
+            if (recEl) recEl.textContent = formatBRL(rec);
             if (el) el.textContent = formatBRL(change);
         }
 
@@ -1911,15 +1979,17 @@
             let change = 0;
 
             if (selectedPaymentMethod === 'Dinheiro') {
-                const rawRec = parseFloat(document.getElementById('cash-received-input')?.value);
-                if (!isNaN(rawRec) && rawRec > 0) {
-                    if (rawRec < total) {
-                        Swal.fire({ icon: 'warning', title: 'Valor Insuficiente', text: 'O valor recebido em dinheiro é menor que o total da venda.' });
-                        return;
-                    }
-                    received = rawRec;
-                    change = Number((rawRec - total).toFixed(2));
+                const rawRec = Number(cashReceivedAmount || 0);
+                if (rawRec <= 0) {
+                    openCashReceivedModal();
+                    return;
                 }
+                if (rawRec < total) {
+                    Swal.fire({ icon: 'warning', title: 'Valor Insuficiente', text: 'O valor recebido em dinheiro é menor que o total da venda.' });
+                    return;
+                }
+                received = rawRec;
+                change = Number((rawRec - total).toFixed(2));
             }
 
             cart.forEach(item => {
@@ -1946,16 +2016,94 @@
 
             state.sales.unshift(sale);
             cart = [];
+            cashReceivedAmount = 0;
             saveState();
+
+            // Fecha imediatamente o modal Finalizar Venda e oculta o card do pedido atual
             closeModal('checkout-modal');
+            const checkoutModalEl = document.getElementById('checkout-modal');
+            if (checkoutModalEl) {
+                checkoutModalEl.classList.add('hidden');
+                checkoutModalEl.classList.remove('flex');
+            }
+
             refreshAllUI();
 
+            if (sale.changeAmount > 0) {
+                Swal.fire({
+                    width: '420px',
+                    padding: '0',
+                    background: 'transparent',
+                    showConfirmButton: false,
+                    allowOutsideClick: false,
+                    html: `
+                        <div class="bg-slate-900 border-2 border-amber-500/80 rounded-3xl p-6 text-center space-y-4 shadow-2xl">
+                            <div class="w-16 h-16 rounded-full bg-amber-500/20 border-2 border-amber-400 text-amber-400 flex items-center justify-center text-3xl mx-auto shadow-lg shadow-amber-500/25">
+                                <i class="fa-solid fa-hand-holding-dollar"></i>
+                            </div>
+                            <div class="space-y-1">
+                                <span class="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400">
+                                    Pagamento Confirmado • ${sale.id}
+                                </span>
+                                <h3 class="text-lg font-extrabold text-white pt-1">Devolver Troco ao Cliente</h3>
+                            </div>
+                            <div class="bg-amber-500/15 border-2 border-amber-500/60 rounded-2xl p-4 space-y-1">
+                                <span class="text-[11px] font-bold uppercase tracking-wider text-amber-300 block">Troco a Devolver</span>
+                                <strong class="text-4xl font-black text-amber-400 block tracking-tight">${formatBRL(sale.changeAmount)}</strong>
+                            </div>
+                            <div class="bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-xs space-y-1.5">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-slate-400">Total da Compra:</span>
+                                    <strong class="text-white">${formatBRL(sale.total)}</strong>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-slate-400">Valor Recebido:</span>
+                                    <strong class="text-emerald-400">${formatBRL(sale.receivedAmount)}</strong>
+                                </div>
+                            </div>
+                            <button type="button" onclick="Swal.close()" class="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-sm transition-all shadow-lg shadow-amber-500/25">
+                                <i class="fa-solid fa-check mr-1"></i> Troco Entregue • Concluir
+                            </button>
+                        </div>
+                    `
+                });
+                return;
+            }
+
             Swal.fire({
-                icon: 'success',
-                title: `Venda ${sale.id} Concluída!`,
-                text: change > 0 ? `Troco: ${formatBRL(change)}` : `Pagamento via ${sale.paymentMethod}`,
-                timer: 1600,
-                showConfirmButton: false
+                width: '400px',
+                padding: '0',
+                background: 'transparent',
+                showConfirmButton: false,
+                timer: 3200,
+                timerProgressBar: true,
+                html: `
+                    <div class="bg-slate-900 border border-emerald-500/50 rounded-3xl p-6 text-center space-y-4 shadow-2xl">
+                        <div class="w-16 h-16 rounded-full bg-emerald-500/20 border-2 border-emerald-500 text-emerald-400 flex items-center justify-center text-3xl mx-auto shadow-lg shadow-emerald-500/20">
+                            <i class="fa-solid fa-check"></i>
+                        </div>
+                        <div class="space-y-1">
+                            <span class="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400">
+                                Venda ${sale.id}
+                            </span>
+                            <h3 class="text-xl font-extrabold text-white pt-1">Pagamento Confirmado!</h3>
+                            <p class="text-xs text-slate-400">${sale.dateBR} às ${sale.time} • ${sale.operatorName}</p>
+                        </div>
+                        <div class="bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-xs space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-slate-400">Forma de Pagamento:</span>
+                                <strong class="text-white">${sale.paymentMethod}</strong>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-slate-400">Valor Pago:</span>
+                                <strong class="text-emerald-400 text-sm">${formatBRL(sale.total)}</strong>
+                            </div>
+                        </div>
+                        <button type="button" onclick="Swal.close()" class="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold text-xs transition-all shadow-lg">
+                            OK, Nova Venda
+                        </button>
+                    </div>
+                `
             });
         }
 
@@ -2020,10 +2168,10 @@
                                 ` : ''}
                             </div>
                         </div>
-                        <div class="border-t border-slate-800/80 pt-2 space-y-1">
+                        <div class="text-[11px] text-slate-300 space-y-0.5 pt-1 border-t border-slate-800/80">
                             ${(s.items || []).map(it => `
-                                <div class="flex items-center justify-between text-[11px]">
-                                    <span class="text-slate-300"><strong class="text-amber-400">${it.qty}x</strong> ${it.name}</span>
+                                <div class="flex justify-between">
+                                    <span><strong class="text-amber-400">${it.qty}x</strong> ${it.name}</span>
                                     <span class="text-slate-400">${formatBRL(it.price * it.qty)}</span>
                                 </div>
                             `).join('')}
@@ -2041,58 +2189,59 @@
             const isAdmin = active.role === 'Administrador';
             const rules = { ...DEFAULT_SECURITY_RULES, ...(state.securityRules || {}) };
             const todayISO = getBrasiliaISODate(0);
-            const opRefundsToday = (state.sales || []).filter(s => s.status === 'refunded' && s.dateISO === todayISO && s.operatorId === active.id).length;
-            const exceedsOperatorRule = !isAdmin && (sale.total > Number(rules.refundMaxAmount ?? 5.00) || opRefundsToday >= Number(rules.dailyRefundLimit || 1));
+            const todayRefundsCount = (state.sales || []).filter(s => s.status === 'refunded' && s.dateISO === todayISO && s.operatorId === active.id).length;
+
+            const needsManagerApproval = !isAdmin && (
+                Number(sale.total) > Number(rules.refundMaxAmount ?? 5.00) ||
+                todayRefundsCount >= Number(rules.dailyRefundLimit || 1)
+            );
 
             Swal.fire({
-                title: exceedsOperatorRule ? 'Solicitar Estorno ao Gerente' : `Estornar Venda ${sale.id}`,
+                title: needsManagerApproval ? `Solicitar Estorno ao Gerente (${sale.id})` : `Estornar Venda ${sale.id}`,
                 html: `
                     <div class="text-left space-y-3 mt-2 text-xs">
-                        <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
-                            <p class="text-slate-300">Venda: <strong class="text-white">${sale.id}</strong> • Valor: <strong class="text-red-400">${formatBRL(sale.total)}</strong></p>
-                            ${exceedsOperatorRule ? `<p class="text-amber-400 mt-1">Acima do limite direto do operador (${formatBRL(rules.refundMaxAmount)} / ${rules.dailyRefundLimit}x dia). O gerente será notificado com o motivo.</p>` : ''}
-                        </div>
+                        <p class="text-slate-300">Valor da venda: <strong class="text-red-400">${formatBRL(sale.total)}</strong> (${sale.paymentMethod})</p>
+                        ${needsManagerApproval ? `<p class="text-amber-400 bg-amber-500/10 border border-amber-500/30 rounded-lg p-2">Acima do limite permitido para operador (${formatBRL(rules.refundMaxAmount)}). O motivo será enviado ao painel do Gerente.</p>` : ''}
                         <div>
                             <label class="block font-semibold text-slate-300 mb-1">Motivo do Estorno</label>
                             <select id="refund-reason-preset" onchange="toggleCustomRefundReason()" class="swal2-select w-full !m-0">
                                 <option value="Erro de lançamento no caixa">Erro de lançamento no caixa</option>
-                                <option value="Cliente desistiu da compra">Cliente desistiu da compra</option>
+                                <option value="Desistência do cliente antes do preparo">Desistência do cliente antes do preparo</option>
                                 <option value="Produto frio, vencido ou com defeito">Produto frio, vencido ou com defeito</option>
                                 <option value="Forma de pagamento incorreta">Forma de pagamento incorreta</option>
                                 <option value="Outro">Outro motivo...</option>
                             </select>
                         </div>
                         <div id="refund-custom-reason-box" class="hidden">
-                            <input type="text" id="refund-custom-reason" placeholder="Descreva o motivo..." class="swal2-input w-full !m-0">
+                            <input type="text" id="refund-custom-reason-inp" placeholder="Descreva o motivo..." class="swal2-input w-full !m-0">
                         </div>
                         <div>
-                            <label class="block font-semibold text-slate-300 mb-1">Destino dos Itens no Estoque</label>
+                            <label class="block font-semibold text-slate-300 mb-1">Destino dos Produtos</label>
                             <select id="refund-stock-action" class="swal2-select w-full !m-0">
                                 <option value="restock">Devolver itens ao estoque</option>
-                                <option value="discard">Descartar / Perda (não voltar ao estoque)</option>
+                                <option value="discard">Descarte / Perda (não voltar ao estoque)</option>
                             </select>
                         </div>
                     </div>
                 `,
                 showCancelButton: true,
-                confirmButtonText: exceedsOperatorRule ? 'Enviar Solicitação ao Gerente' : 'Confirmar Estorno',
+                confirmButtonText: needsManagerApproval ? 'Enviar ao Gerente' : 'Confirmar Estorno',
                 cancelButtonText: 'Cancelar',
                 preConfirm: () => {
                     const preset = document.getElementById('refund-reason-preset').value;
-                    const custom = (document.getElementById('refund-custom-reason')?.value || '').trim();
+                    const custom = (document.getElementById('refund-custom-reason-inp')?.value || '').trim();
                     const reason = preset === 'Outro' ? custom : preset;
+                    const stockAction = document.getElementById('refund-stock-action').value;
                     if (!reason) {
                         Swal.showValidationMessage('Informe o motivo do estorno.');
                         return false;
                     }
-                    const stockAction = document.getElementById('refund-stock-action').value;
                     return { reason, stockAction };
                 }
             }).then(res => {
                 if (!res.isConfirmed) return;
-                const { reason, stockAction } = res.value;
 
-                if (exceedsOperatorRule) {
+                if (needsManagerApproval) {
                     if (!state.managerRefundRequests) state.managerRefundRequests = [];
                     state.managerRefundRequests.unshift({
                         id: 'REQ-' + Date.now(),
@@ -2101,45 +2250,38 @@
                         operatorName: active.name,
                         amount: sale.total,
                         paymentMethod: sale.paymentMethod,
-                        reason,
-                        stockAction,
+                        reason: res.value.reason,
+                        stockAction: res.value.stockAction,
                         status: 'pending',
-                        createdAt: getNowBrasiliaFormatted(false),
-                        managerAlerted: false
+                        managerAlerted: false,
+                        createdAt: getNowBrasiliaFormatted(false)
                     });
                     saveState();
                     refreshAllUI();
-                    Swal.fire({
-                        icon: 'info',
-                        title: 'Solicitação Enviada!',
-                        text: 'O gerente foi notificado com o motivo do estorno para aprovação.',
-                        timer: 2000,
-                        showConfirmButton: false
-                    });
+                    Swal.fire({ icon: 'info', title: 'Solicitação Enviada!', text: 'O gerente foi notificado com o motivo do estorno.', timer: 1800, showConfirmButton: false });
                     return;
                 }
 
-                // Direct refund (Manager or Operator within limit)
                 sale.status = 'refunded';
-                sale.refundReason = reason;
+                sale.refundReason = res.value.reason;
                 sale.refundedAt = getNowBrasiliaFormatted(false);
                 sale.refundedBy = active.name;
 
-                if (stockAction === 'restock') {
-                    sale.items.forEach(item => {
+                if (res.value.stockAction === 'restock') {
+                    (sale.items || []).forEach(item => {
                         const prod = state.products.find(p => p.id === item.id);
                         if (prod) prod.stock += item.qty;
                     });
                     state.stockMovements.unshift({
                         time: getNowBrasiliaFormatted(false),
-                        product: sale.items.map(i => `${i.qty}x ${i.name}`).join(', '),
+                        product: (sale.items || []).map(i => `${i.qty}x ${i.name}`).join(', '),
                         qty: 'Devolução Estorno',
-                        reason: `Estorno ${sale.id}: ${reason}`,
+                        reason: `Estorno ${sale.id}: ${res.value.reason}`,
                         user: active.name
                     });
                 }
 
-                if (isAdmin && sale.operatorId !== active.id) {
+                if (isAdmin && sale.operatorId && sale.operatorId !== active.id) {
                     if (!state.operatorNotifications) state.operatorNotifications = [];
                     state.operatorNotifications.push({
                         id: 'NOTIF-' + Date.now(),
@@ -2147,7 +2289,7 @@
                         saleId: sale.id,
                         amount: sale.total,
                         paymentMethod: sale.paymentMethod,
-                        reason,
+                        reason: res.value.reason,
                         managerName: active.name,
                         createdAt: getNowBrasiliaFormatted(false),
                         seen: false
@@ -2156,11 +2298,153 @@
 
                 saveState();
                 refreshAllUI();
+                Swal.fire({ icon: 'success', title: 'Venda Estornada!', timer: 1500, showConfirmButton: false });
+            });
+        }
+
+        function normalizePixKeyForBCB(rawKey) {
+            const trimmed = String(rawKey || '').trim();
+            if (!trimmed) return { normalized: '', typeLabel: 'Não configurada' };
+
+            // E-mail
+            if (trimmed.includes('@')) {
+                return { normalized: trimmed.toLowerCase(), typeLabel: 'E-mail' };
+            }
+
+            // Chave Aleatória (EVP - 36 caracteres com hífens)
+            if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(trimmed)) {
+                return { normalized: trimmed.toLowerCase(), typeLabel: 'Chave Aleatória' };
+            }
+
+            // Telefone explícito com +
+            if (trimmed.startsWith('+')) {
+                const digits = '+' + trimmed.replace(/\D/g, '');
+                return { normalized: digits, typeLabel: 'Celular' };
+            }
+
+            const digitsOnly = trimmed.replace(/\D/g, '');
+            // CNPJ (14 dígitos)
+            if (digitsOnly.length === 14) {
+                return { normalized: digitsOnly, typeLabel: 'CNPJ' };
+            }
+            // CPF (11 dígitos) vs Celular (11 dígitos com DDD + 9)
+            if (digitsOnly.length === 11) {
+                const looksLikePhone = /[()\s-]/.test(trimmed) && digitsOnly[2] === '9';
+                if (looksLikePhone) {
+                    return { normalized: `+55${digitsOnly}`, typeLabel: 'Celular' };
+                }
+                return { normalized: digitsOnly, typeLabel: 'CPF' };
+            }
+            // Celular sem 9º dígito (10 dígitos)
+            if (digitsOnly.length === 10) {
+                return { normalized: `+55${digitsOnly}`, typeLabel: 'Celular' };
+            }
+
+            return { normalized: trimmed, typeLabel: 'Chave' };
+        }
+
+        function generatePixEMVPayload(amount) {
+            const rules = { ...DEFAULT_SECURITY_RULES, ...(state.securityRules || {}) };
+            const { normalized: pixKey, typeLabel } = normalizePixKeyForBCB(rules.pixKey || 'quiosque@techpereirabh.com.br');
+            const merchantName = String(rules.pixMerchantName || 'TECH PEREIRA BH')
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .replace(/[^a-zA-Z0-9 ]/g, '').toUpperCase().slice(0, 25) || 'QUIOSQUE PDV';
+            const merchantCity = String(rules.pixCity || 'BELO HORIZONTE')
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .replace(/[^a-zA-Z0-9 ]/g, '').toUpperCase().slice(0, 15) || 'BELO HORIZONTE';
+
+            const amountStr = Number(amount || 0).toFixed(2);
+            const txid = ('PDV' + Date.now().toString().slice(-8)).slice(0, 25);
+
+            const merchantAccountInfo = formatEMVField('00', 'br.gov.bcb.pix') + formatEMVField('01', pixKey);
+            const additionalData = formatEMVField('05', txid);
+
+            const rawPayload =
+                formatEMVField('00', '01') +
+                formatEMVField('26', merchantAccountInfo) +
+                formatEMVField('52', '0000') +
+                formatEMVField('53', '986') +
+                (Number(amount) > 0 ? formatEMVField('54', amountStr) : '') +
+                formatEMVField('58', 'BR') +
+                formatEMVField('59', merchantName) +
+                formatEMVField('60', merchantCity) +
+                formatEMVField('62', additionalData) +
+                '6304';
+
+            const crc = computeCRC16CCITT(rawPayload);
+            return {
+                payload: rawPayload + crc,
+                pixKey,
+                typeLabel,
+                merchantName
+            };
+        }
+
+        function renderCheckoutPixQRCode() {
+            const total = Number(cart.reduce((a, b) => a + b.price * b.qty, 0).toFixed(2));
+            const { payload, pixKey, typeLabel, merchantName } = generatePixEMVPayload(total);
+
+            const amountBadge = document.getElementById('pix-amount-badge');
+            const keyTypeBadge = document.getElementById('pix-key-type-badge');
+            const keyPreview = document.getElementById('pix-key-preview');
+            const merchantPreview = document.getElementById('pix-merchant-preview');
+            const payloadInp = document.getElementById('pix-payload-input');
+            const qrImg = document.getElementById('pix-qrcode-img');
+
+            if (amountBadge) amountBadge.textContent = formatBRL(total);
+            if (keyTypeBadge) keyTypeBadge.textContent = typeLabel;
+            if (keyPreview) keyPreview.textContent = pixKey;
+            if (merchantPreview) merchantPreview.textContent = merchantName;
+            if (payloadInp) payloadInp.value = payload;
+            if (qrImg) {
+                qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=6&data=${encodeURIComponent(payload)}`;
+            }
+        }
+
+        function openQuickPixKeyTestModal() {
+            const rules = { ...DEFAULT_SECURITY_RULES, ...(state.securityRules || {}) };
+            Swal.fire({
+                title: 'Configurar Chave Pix para Teste',
+                html: `
+                    <div class="text-left space-y-3 mt-2 text-xs">
+                        <p class="text-slate-400">Informe uma chave Pix real para ler o QR Code no aplicativo do seu banco e validar o valor da compra:</p>
+                        <div>
+                            <label class="block font-semibold text-slate-300 mb-1">Sua Chave Pix (CPF, CNPJ, E-mail, +55Celular ou Aleatória)</label>
+                            <input type="text" id="quick-pix-key" value="${rules.pixKey || ''}" placeholder="Ex: seuemail@dominio.com ou +5531999999999" class="swal2-input w-full !m-0">
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-slate-300 mb-1">Nome do Titular / Recebedor</label>
+                            <input type="text" id="quick-pix-merchant" maxlength="25" value="${rules.pixMerchantName || 'TECH PEREIRA BH'}" class="swal2-input w-full !m-0">
+                        </div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Atualizar QR Code',
+                cancelButtonText: 'Cancelar',
+                preConfirm: () => {
+                    const pixKey = (document.getElementById('quick-pix-key').value || '').trim();
+                    const pixMerchantName = (document.getElementById('quick-pix-merchant').value || '').trim() || 'TECH PEREIRA BH';
+                    if (!pixKey) {
+                        Swal.showValidationMessage('Digite uma chave Pix válida.');
+                        return false;
+                    }
+                    return { pixKey, pixMerchantName };
+                }
+            }).then(res => {
+                if (!res.isConfirmed) return;
+                state.securityRules = {
+                    ...rules,
+                    pixKey: res.value.pixKey,
+                    pixMerchantName: res.value.pixMerchantName
+                };
+                saveState();
+                renderCheckoutPixQRCode();
                 Swal.fire({
+                    toast: true,
+                    position: 'top-end',
                     icon: 'success',
-                    title: 'Venda Estornada!',
-                    text: `A venda ${sale.id} (${formatBRL(sale.total)}) foi estornada.`,
-                    timer: 1600,
+                    title: 'QR Code atualizado com sua chave Pix!',
+                    timer: 1800,
                     showConfirmButton: false
                 });
             });
@@ -2268,6 +2552,33 @@
         }
 
         // ==================== SHIFT CONTROL & SANGRIA ====================
+        function previewShiftCountDifference(userId, expectedAmount) {
+            const inp = document.getElementById(`close-counted-input-${userId}`);
+            const box = document.getElementById(`close-diff-box-${userId}`);
+            if (!inp || !box) return;
+
+            const raw = inp.value.trim();
+            if (raw === '' || isNaN(parseFloat(raw))) {
+                box.innerHTML = `<span class="text-slate-400">Informe o valor contado em dinheiro na gaveta para conferir.</span>`;
+                box.className = 'bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-[11px] flex items-center justify-between';
+                return;
+            }
+
+            const counted = Number(parseFloat(raw).toFixed(2));
+            const diff = Number((counted - Number(expectedAmount || 0)).toFixed(2));
+
+            if (Math.abs(diff) < 0.01) {
+                box.className = 'bg-emerald-500/10 border border-emerald-500/40 rounded-xl px-3 py-2 text-[11px] flex items-center justify-between text-emerald-400 font-bold';
+                box.innerHTML = `<span><i class="fa-solid fa-circle-check mr-1.5"></i>Caixa Conferido (Bateu exato)</span><span>R$ 0,00</span>`;
+            } else if (diff > 0) {
+                box.className = 'bg-blue-500/10 border border-blue-500/40 rounded-xl px-3 py-2 text-[11px] flex items-center justify-between text-blue-400 font-bold';
+                box.innerHTML = `<span><i class="fa-solid fa-arrow-trend-up mr-1.5"></i>Sobra de Caixa</span><span>+ ${formatBRL(diff)}</span>`;
+            } else {
+                box.className = 'bg-red-500/10 border border-red-500/40 rounded-xl px-3 py-2 text-[11px] flex items-center justify-between text-red-400 font-bold';
+                box.innerHTML = `<span><i class="fa-solid fa-triangle-exclamation mr-1.5"></i>Falta / Quebra de Caixa</span><span>- ${formatBRL(Math.abs(diff))}</span>`;
+            }
+        }
+
         function openShiftControlModal() {
             const active = getActiveUser();
             const isAdmin = active.role === 'Administrador';
@@ -2293,10 +2604,17 @@
                             ${sh.isOpen ? `
                                 <div class="grid grid-cols-2 gap-2 text-xs bg-slate-900 p-3 rounded-lg">
                                     <div><span class="text-slate-400 block">Fundo Inicial:</span><strong class="text-white">${formatBRL(stats.opening)}</strong></div>
-                                    <div><span class="text-slate-400 block">Saldo Gaveta:</span><strong class="text-emerald-400">${formatBRL(stats.expected)}</strong></div>
+                                    <div><span class="text-slate-400 block">Saldo Esperado:</span><strong class="text-amber-400">${formatBRL(stats.expected)}</strong></div>
                                 </div>
-                                <button type="button" onclick="closeOperatorShift('${op.id}')" class="w-full py-2 rounded-xl bg-red-500/15 hover:bg-red-500 text-red-400 hover:text-white font-bold text-xs transition-all">
-                                    Encerrar Turno de ${op.name}
+                                <div class="space-y-1.5">
+                                    <label class="block text-[11px] font-bold text-slate-300">Valor Contado na Gaveta (R$) <span class="text-red-400">*</span></label>
+                                    <input type="number" step="0.01" min="0" id="close-counted-input-${op.id}" oninput="previewShiftCountDifference('${op.id}', ${stats.expected})" placeholder="Ex: ${stats.expected.toFixed(2)}" class="w-full bg-slate-900 border border-slate-700 focus:border-amber-500 rounded-xl px-3 py-2 text-sm font-extrabold text-white outline-none">
+                                    <div id="close-diff-box-${op.id}" class="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-[11px] flex items-center justify-between text-slate-400">
+                                        <span>Informe o valor contado em dinheiro na gaveta para conferir.</span>
+                                    </div>
+                                </div>
+                                <button type="button" onclick="closeOperatorShift('${op.id}')" class="w-full py-2.5 rounded-xl bg-red-500/15 hover:bg-red-500 text-red-400 hover:text-white font-bold text-xs transition-all">
+                                    <i class="fa-solid fa-lock mr-1"></i> Encerrar Turno de ${op.name}
                                 </button>
                             ` : `
                                 <button type="button" onclick="openOperatorShift('${op.id}', 100)" class="w-full py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold text-xs transition-all">
@@ -2318,8 +2636,16 @@
                             <div class="flex justify-between"><span>Sangrias Realizadas:</span><strong class="text-orange-400">- ${formatBRL(stats.sangrias)}</strong></div>
                             <div class="flex justify-between pt-2 border-t border-slate-800 text-sm"><span>Saldo Esperado na Gaveta:</span><strong class="text-amber-400">${formatBRL(stats.expected)}</strong></div>
                         </div>
-                        <button type="button" onclick="closeOperatorShift('${active.id}')" class="w-full py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white font-extrabold text-xs transition-all">
-                            Fechar Meu Turno / Caixa
+                        <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-2">
+                            <label class="block text-xs font-bold text-white">Valor Contado na Gaveta (R$) <span class="text-red-400">*</span></label>
+                            <p class="text-[11px] text-slate-400">Conte o dinheiro físico da gaveta e lance o valor total abaixo antes de encerrar.</p>
+                            <input type="number" step="0.01" min="0" id="close-counted-input-${active.id}" oninput="previewShiftCountDifference('${active.id}', ${stats.expected})" placeholder="0,00" class="w-full bg-slate-900 border border-slate-700 focus:border-amber-500 rounded-xl px-4 py-2.5 text-base font-extrabold text-white outline-none">
+                            <div id="close-diff-box-${active.id}" class="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-[11px] flex items-center justify-between text-slate-400">
+                                <span>Informe o valor contado em dinheiro na gaveta para conferir.</span>
+                            </div>
+                        </div>
+                        <button type="button" onclick="closeOperatorShift('${active.id}')" class="w-full py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white font-extrabold text-xs transition-all shadow-lg shadow-red-500/20">
+                            <i class="fa-solid fa-lock mr-1"></i> Confirmar Conferência e Fechar Turno
                         </button>
                     `;
                 } else {
@@ -2350,16 +2676,38 @@
         }
 
         function closeOperatorShift(userId) {
+            const inp = document.getElementById(`close-counted-input-${userId}`);
+            const rawVal = inp ? inp.value.trim() : '';
+            const countedAmount = parseFloat(rawVal);
+
+            if (!inp || rawVal === '' || isNaN(countedAmount) || countedAmount < 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Conferência Obrigatória',
+                    text: 'Lance o valor contado em dinheiro na gaveta antes de fechar o turno.'
+                }).then(() => {
+                    if (inp) inp.focus();
+                });
+                return;
+            }
+
             const sh = getUserShift(userId);
             const stats = getShiftDrawerStats(sh);
+            const counted = Number(countedAmount.toFixed(2));
+            const difference = Number((counted - stats.expected).toFixed(2));
+            const opUser = state.users.find(u => u.id === userId);
+
             if (!state.shiftHistory) state.shiftHistory = [];
             state.shiftHistory.unshift({
                 type: 'close',
                 operatorId: userId,
+                operatorName: opUser ? opUser.name : 'Operador',
                 dateISO: getBrasiliaISODate(0),
                 closedAt: getNowBrasiliaFormatted(false),
                 sangrias: stats.sangrias,
-                expectedDrawer: stats.expected
+                expectedDrawer: stats.expected,
+                countedDrawer: counted,
+                difference
             });
             sh.isOpen = false;
             sh.openedAt = null;
@@ -2368,55 +2716,24 @@
             saveState();
             closeModal('shift-modal');
             refreshAllUI();
-            Swal.fire({ icon: 'success', title: 'Turno Encerrado!', timer: 1400, showConfirmButton: false });
-        }
 
-        function openQuickSangriaModal() {
-            const active = getActiveUser();
-            const rules = { ...DEFAULT_SECURITY_RULES, ...(state.securityRules || {}) };
-            const ops = state.users.filter(u => u.role !== 'Administrador' && getUserShift(u.id).isOpen);
-            if (ops.length === 0) {
-                Swal.fire({ icon: 'warning', title: 'Nenhum Caixa Aberto', text: 'É necessário ter um caixa aberto para realizar sangria.' });
-                return;
-            }
-
-            const targetOp = active.role === 'Administrador' ? ops[0] : (getUserShift(active.id).isOpen ? active : ops[0]);
+            const diffLabel = Math.abs(difference) < 0.01
+                ? 'Caixa bateu exatamente com o saldo esperado!'
+                : (difference > 0
+                    ? `Sobra de caixa registrada: + ${formatBRL(difference)}`
+                    : `Falta / quebra registrada: - ${formatBRL(Math.abs(difference))}`);
 
             Swal.fire({
-                title: 'Realizar Sangria de Caixa',
+                icon: Math.abs(difference) < 0.01 ? 'success' : 'info',
+                title: 'Turno Encerrado!',
                 html: `
-                    <div class="text-left space-y-3 mt-2 text-xs">
-                        <p class="text-slate-400">Operador: <strong class="text-white">${targetOp.name}</strong> • Limites: ${formatBRL(rules.sangriaMin)} a ${formatBRL(rules.sangriaMax)}</p>
-                        <input type="number" step="0.01" id="sangria-amount-inp" placeholder="Valor da sangria (R$)" class="swal2-input w-full !m-0">
-                        <input type="text" id="sangria-note-inp" placeholder="Observação (ex: Depósito cofre)" class="swal2-input w-full !m-0">
+                    <div class="text-xs space-y-1.5 mt-2">
+                        <p>Saldo Esperado: <strong>${formatBRL(stats.expected)}</strong></p>
+                        <p>Valor Contado: <strong class="text-amber-400">${formatBRL(counted)}</strong></p>
+                        <p class="pt-1 font-bold ${Math.abs(difference) < 0.01 ? 'text-emerald-400' : (difference > 0 ? 'text-blue-400' : 'text-red-400')}">${diffLabel}</p>
                     </div>
                 `,
-                showCancelButton: true,
-                confirmButtonText: 'Confirmar Sangria',
-                cancelButtonText: 'Cancelar',
-                preConfirm: () => {
-                    const amount = parseFloat(document.getElementById('sangria-amount-inp').value);
-                    const note = (document.getElementById('sangria-note-inp').value || '').trim() || 'Sangria operacional';
-                    if (isNaN(amount) || amount < rules.sangriaMin || amount > rules.sangriaMax) {
-                        Swal.showValidationMessage(`Informe um valor entre ${formatBRL(rules.sangriaMin)} e ${formatBRL(rules.sangriaMax)}.`);
-                        return false;
-                    }
-                    return { amount: Number(amount.toFixed(2)), note };
-                }
-            }).then(res => {
-                if (!res.isConfirmed) return;
-                const sh = getUserShift(targetOp.id);
-                if (!sh.adjustments) sh.adjustments = [];
-                sh.adjustments.push({
-                    type: 'sangria',
-                    amount: res.value.amount,
-                    note: res.value.note,
-                    time: getNowBrasiliaFormatted(false),
-                    by: active.name
-                });
-                saveState();
-                refreshAllUI();
-                Swal.fire({ icon: 'success', title: 'Sangria Registrada!', text: `${formatBRL(res.value.amount)} retirado do caixa.`, timer: 1500, showConfirmButton: false });
+                confirmButtonText: 'Concluir'
             });
         }
 
