@@ -91,6 +91,9 @@
         }
 
         /* SweetAlert2 Dark Theme Overrides */
+        .swal2-container {
+            z-index: 20000 !important;
+        }
         .swal2-popup {
             background: #1e293b !important;
             color: #f8fafc !important;
@@ -1504,10 +1507,41 @@
             if (!target) return;
             const access = getUserAccessStatus(target);
             if (!access.allowed) {
+                const isBlocked = !!target.blocked;
+                const nowTime = getNowBrasiliaFormatted(true);
                 Swal.fire({
-                    icon: 'error',
-                    title: target.blocked ? 'Acesso Bloqueado' : 'Fora do Horário de Trabalho',
-                    text: access.reason
+                    width: '400px',
+                    padding: '0',
+                    background: 'transparent',
+                    showConfirmButton: false,
+                    html: `
+                        <div class="bg-slate-900 border ${isBlocked ? 'border-red-500/40' : 'border-amber-500/40'} rounded-3xl p-6 text-center space-y-4 shadow-2xl">
+                            <div class="w-14 h-14 rounded-2xl ${isBlocked ? 'bg-red-500/15 text-red-400 border border-red-500/30' : 'bg-amber-500/15 text-amber-400 border border-amber-500/30'} flex items-center justify-center text-2xl mx-auto">
+                                <i class="fa-solid ${isBlocked ? 'fa-user-lock' : 'fa-clock'}"></i>
+                            </div>
+                            <div class="space-y-1">
+                                <span class="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${isBlocked ? 'bg-red-500/15 text-red-400' : 'bg-amber-500/15 text-amber-400'}">
+                                    ${isBlocked ? 'Acesso Restrito' : 'Fora do Turno'}
+                                </span>
+                                <h3 class="text-lg font-extrabold text-white pt-1">
+                                    ${isBlocked ? 'Acesso Bloqueado' : 'Fora do Horário de Trabalho'}
+                                </h3>
+                                <p class="text-xs text-slate-400">${target.name} • ${target.role}</p>
+                            </div>
+                            <div class="bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-xs space-y-2">
+                                <p class="text-slate-200 font-medium">${access.reason}</p>
+                                ${!isBlocked && target.scheduleEnabled ? `
+                                    <div class="flex items-center justify-between pt-2 border-t border-slate-800/80 text-[11px] text-slate-400">
+                                        <span>Horário atual: <strong class="text-slate-200">${nowTime}</strong></span>
+                                        <span>Turno: <strong class="text-amber-400">${target.workStart} às ${target.workEnd}</strong></span>
+                                    </div>
+                                ` : ''}
+                            </div>
+                            <button type="button" onclick="Swal.close()" class="w-full py-2.5 rounded-xl ${isBlocked ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-amber-500 hover:bg-amber-600 text-slate-950'} font-extrabold text-xs transition-all shadow-lg">
+                                Entendi
+                            </button>
+                        </div>
+                    `
                 });
                 return;
             }
